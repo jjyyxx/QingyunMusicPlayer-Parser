@@ -14,7 +14,7 @@ export class SafeScript {
      * @param {string} funcCall - The function to call to get a return value.
      */
     constructor(script, funcCall) {
-        this.script = this.buildScript(script, funcCall)
+        this.script = SafeScript.buildScript(script, funcCall)
         this.blob = new Blob([this.script], { type: 'text/javascript' })
         this.url = URL.createObjectURL(this.blob)
         this.worker = undefined

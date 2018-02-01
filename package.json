@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/obstudio/QingyunMusicPlayer-Parser/issues"
   },
-  "homepage": "https://github.com/obstudio/QingyunMusicPlayer-Parser#readme"
+  "homepage": "https://github.com/obstudio/QingyunMusicPlayer-Parser#readme",
+  "dependencies": {
+    "vm2": "^3.5.2"
+  }
 }
