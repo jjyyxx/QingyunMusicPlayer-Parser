@@ -1,0 +1,26 @@
+{
+  "name": "qingyun-musicplayer-parser",
+  "version": "1.0.0",
+  "description": "A parser to parse tokenized data of qy format to generate various output.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/obstudio/QingyunMusicPlayer-Parser.git"
+  },
+  "keywords": [
+    "music",
+    "parser"
+  ],
+  "author": "NN708",
+  "contributors": [
+    "jjyyxx"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/obstudio/QingyunMusicPlayer-Parser/issues"
+  },
+  "homepage": "https://github.com/obstudio/QingyunMusicPlayer-Parser#readme"
+}
