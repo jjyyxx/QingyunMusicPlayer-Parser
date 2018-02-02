@@ -37,8 +37,8 @@ module.exports = {
     Acct(scale) {
         AssignSetting(this, 'Accent', scale, Criteria.Acct)
     },
-    Light(r) {
-        AssignSetting(this, 'Light', r, Criteria.Light)
+    Light(scale) {
+        AssignSetting(this, 'Light', scale, Criteria.Light)
     },
     Appo(r) {
         AssignSetting(this, 'Appo', r, Criteria.Appo)
@@ -46,8 +46,8 @@ module.exports = {
     Port(r) {
         AssignSetting(this, 'Port', r, Criteria.Port)
     },
-    Trace(r) {
-        AssignSetting(this, 'Trace', r, Criteria.Trace)
+    Trace(count) {
+        AssignSetting(this, 'Trace', count, Criteria.Trace)
     },
     FadeIn(time) {
         AssignSetting(this, 'FadeIn', time, Criteria.FadeIn)
@@ -74,10 +74,10 @@ const Criteria = {
     Stac1:   (restProportion) => restProportion >= 0 && restProportion <= 0,
     Stac2:   (restProportion) => restProportion >= 0 && restProportion <= 0,
     Acct:    (scale) => scale > 1,
-    Light:   () => true,
+    Light:   (scale) => scale < 1 && scale > 0,
     Appo:    (r) => r > 0,
     Port:    (r) => r > 0,
-    Trace:   () => true,
+    Trace:   (count) => count > 0 && Number.isInteger(count),
     FadeIn:  (time) => time > 0,
     FadeOut: (time) => time > 0,
     Rev:     () => true,
