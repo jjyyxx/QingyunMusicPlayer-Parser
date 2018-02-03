@@ -28,11 +28,10 @@ module.exports = {
     Dur(scale) {
         AssignSetting(this, 'Duration', scale, Criteria.Dur)
     },
-    Stac1(restProportion) {
-        AssignSetting(this, 'Stac1', restProportion, Criteria.Stac1)
-    },
-    Stac2(restProportion) {
-        AssignSetting(this, 'Stac2', restProportion, Criteria.Stac2)
+    Stac(restProportion, index = 1) {
+        if (typeof restProportion !== 'number') throw new TypeError('Non-numeric value passed in as Stac')
+        if (!Criteria.Stac(restProportion)) throw new RangeError('Stac out of range')
+        this.Stac[index] = restProportion
     },
     Acct(scale) {
         AssignSetting(this, 'Accent', scale, Criteria.Acct)
@@ -58,9 +57,12 @@ module.exports = {
     Rev(r) {
         AssignSetting(this, 'Rev', r, Criteria.Rev)
     },
-    Var(index, obj) {
-        this.Var[index] = obj
-    }
+    setVar(key, value) {
+        this.Var[key] = value
+    },
+    getVar(key, defaultValue = null) {
+        return this.Var[key] ? this.Var[key] : defaultValue
+    },
 }
 
 const Criteria = {
@@ -71,8 +73,7 @@ const Criteria = {
     Beat:    (beat) => beat > 0 && Number.isInteger(beat),
     Bar:     (bar) => bar > 0 && Number.isInteger(Math.log2(bar)),
     Dur:     (scale) => scale > 0,
-    Stac1:   (restProportion) => restProportion >= 0 && restProportion <= 0,
-    Stac2:   (restProportion) => restProportion >= 0 && restProportion <= 0,
+    Stac:   (restProportion) => restProportion >= 0 && restProportion <= 0,
     Acct:    (scale) => scale > 1,
     Light:   (scale) => scale < 1 && scale > 0,
     Appo:    (r) => r > 0,
