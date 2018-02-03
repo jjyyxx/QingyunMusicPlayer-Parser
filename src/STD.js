@@ -1,6 +1,6 @@
 module.exports = {
     Vol(volume) {
-        AssignSetting(this, 'Vol', volume, Criteria.Vol)
+        AssignSetting(this, 'Vol', volume / 100, Criteria.Vol)
     },
     Spd(speed) {
         AssignSetting(this, 'Speed', speed, Criteria.Spd)
