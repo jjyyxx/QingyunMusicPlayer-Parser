@@ -21,9 +21,9 @@ module.exports = {
     Bar(bar) {
         AssignSetting(this, 'Bar', bar, Criteria.Bar)
     },
-    BeatBar(beat, bar) {
-        AssignSetting(this, 'Beat', beat, Criteria.Beat)
+    BarBeat(bar, beat) {
         AssignSetting(this, 'Bar', bar, Criteria.Bar)
+        AssignSetting(this, 'Beat', beat, Criteria.Beat)
     },
     Dur(scale) {
         AssignSetting(this, 'Duration', scale, Criteria.Dur)
@@ -73,7 +73,7 @@ const Criteria = {
     Beat:    (beat) => beat > 0 && Number.isInteger(beat),
     Bar:     (bar) => bar > 0 && Number.isInteger(Math.log2(bar)),
     Dur:     (scale) => scale > 0,
-    Stac:   (restProportion) => restProportion >= 0 && restProportion <= 0,
+    Stac:    (restProportion) => restProportion >= 0 && restProportion <= 0,
     Acct:    (scale) => scale > 1,
     Light:   (scale) => scale < 1 && scale > 0,
     Appo:    (r) => r > 0,
