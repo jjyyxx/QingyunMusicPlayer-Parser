@@ -57,7 +57,7 @@ class Parser {
 
 class TrackParser {
     static pitchDict = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 }
-    static pitchOperatorDict = {'#': 1, 'b': -1, '\'': 7, ',': -7}
+    static pitchOperatorDict = {'#': 1, 'b': -1, '\'': 12, ',': -12}
 
     /**
      * 
@@ -114,7 +114,7 @@ class TrackParser {
         for (var token of contents) {
             switch (token.Type) {
                 case 'SubTrack':
-                    result.push(...this.parseTrackContent(token.Contents))
+                    result.push(...this.parseTrackContent(token.Contents)) //子音轨也要返回 Meta，含 Duration 和头尾未完全小节拍数
                     break
                 case 'Note':
                     this.Context.notesBeforeTie = this.parseNote(token)
@@ -191,7 +191,7 @@ class TrackParser {
                 duration /= 2
                 pointer += 1
             } else if (char === '.') {
-                const dotCount = 1
+                let dotCount = 1
                 pointer += 1
                 while (note.DurationOperators.charAt(pointer) === '.') {
                     dotCount += 1
