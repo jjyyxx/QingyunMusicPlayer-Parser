@@ -13,7 +13,7 @@ declare namespace SMML {
         Data?: any
         Path?: string
     }
-    
+
     interface Track {
         ID?: string
         Type: "Track"
@@ -30,7 +30,7 @@ declare namespace SMML {
         Contents: Array<BaseToken | SubTrack>
     }
 
-    interface BaseToken{
+    interface BaseToken {
         StartIndex: number
         Type: string
         Scopes: string
@@ -75,5 +75,32 @@ declare namespace SMML {
         FadeOut: number
         Rev: number
         Var: any[]
+    }
+
+    interface ParsedNote {
+        Type: "Note"
+        Pitch: number
+        StartTime: number
+        Duration: number
+        Volume: number
+    }
+
+    interface NoteToken {
+        Type: "Note"
+        Pitches: Pitch[]
+        PitchOperators: string
+        ChordNotations: string
+        ChordOperators: string
+        DurationOperators: string
+        VolumeOperators: string
+        Staccato: number
+        Arpeggio: boolean
+    }
+
+    interface Pitch {
+        ScaleDegree: number
+        PitchOperators: string
+        ChordNotations: string
+        ChordOperators: string
     }
 }
