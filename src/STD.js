@@ -12,7 +12,7 @@ module.exports = {
         AssignSetting(this, 'Octave', oct, Criteria.Oct)
     },
     KeyOct(key, oct) {
-        AssignSetting(this, 'Key', key, Criteria.Key)
+        AssignSetting(this, 'Key', Tonality[key], Criteria.Key)
         AssignSetting(this, 'Octave', oct, Criteria.Oct)
     },
     Beat(beat) {
@@ -67,21 +67,47 @@ module.exports = {
 
 const Criteria = {
     Vol:     (volume) => volume <= 1 && volume >= 0,
-    Spd:     (speed) => speed > 0 && Number.isInteger(speed),
+    Spd:     (speed) => speed > 0,
     Key:     (key) => Number.isInteger(key),
     Oct:     (octave) => Number.isInteger(octave),
-    Beat:    (beat) => beat > 0 && Number.isInteger(beat),
-    Bar:     (bar) => bar > 0 && Number.isInteger(Math.log2(bar)),
+    Beat:    (beat) => beat > 0 && Number.isInteger(Math.log2(beat)),
+    Bar:     (bar) => bar > 0 && Number.isInteger(bar),
     Dur:     (scale) => scale > 0,
-    Stac:    (restProportion) => restProportion >= 0 && restProportion <= 0,
+    Stac:    (restProportion) => restProportion >= 0 && restProportion <= 1,
     Acct:    (scale) => scale > 1,
     Light:   (scale) => scale < 1 && scale > 0,
     Appo:    (r) => r > 0,
     Port:    (r) => r > 0,
-    Trace:   (count) => count > 0 && Number.isInteger(count),
+    Trace:   (count) => count > 0 && count <= 4 && Number.isInteger(count),
     FadeIn:  (time) => time > 0,
     FadeOut: (time) => time > 0,
     Rev:     () => true,
+}
+const Tonality = {
+    "C":    0,
+    "G":    7,
+    "D":    2,
+    "A":    9,
+    "E":    4,
+    "B":    -1,
+    "#F":   6,
+    "#C":   1,
+    "F":    5,
+    "bB":   -2,
+    "bE":   3,
+    "bA":   8,
+    "bD":   1,
+    "bG":   6,
+    "bC":   -1,
+
+    "F#":   6,
+    "C#":   1,
+    "Bb":   -2,
+    "Eb":   3,
+    "Ab":   8,
+    "Db":   1,
+    "Gb":   6,
+    "Cb":   -1,
 }
 
 /**
