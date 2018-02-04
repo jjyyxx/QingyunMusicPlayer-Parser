@@ -18,7 +18,7 @@ class Parser {
      */
     loadLibrary (libs) {
         return libs.map((lib) => {
-            if (lib.Type === "Internal") {
+            if (lib.Type === 'Internal') {
                 return lib
             } else {
                 return this.loadExternalLibrary(lib)
@@ -56,9 +56,6 @@ class Parser {
 }
 
 class TrackParser {
-    static pitchDict = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 }
-    static pitchOperatorDict = {'#': 1, 'b': -1, '\'': 12, ',': -12}
-
     /**
      * 
      * @param {SMML.ParsedNote[]} contents 
@@ -113,16 +110,16 @@ class TrackParser {
         const result = []
         for (var token of contents) {
             switch (token.Type) {
-                case 'SubTrack':
-                    result.push(...this.parseTrackContent(token.Contents)) //子音轨也要返回 Meta，含 Duration 和头尾未完全小节拍数
-                    break
-                case 'Note':
-                    this.Context.notesBeforeTie = this.parseNote(token)
-                    result.push(...this.Context.notesBeforeTie)
-                    break
-                case 'Tie':
-                    this.Context.afterTie = true
-                    break
+            case 'SubTrack':
+                result.push(...this.parseTrackContent(token.Contents)) //子音轨也要返回 Meta，含 Duration 和头尾未完全小节拍数
+                break
+            case 'Note':
+                this.Context.notesBeforeTie = this.parseNote(token)
+                result.push(...this.Context.notesBeforeTie)
+                break
+            case 'Tie':
+                this.Context.afterTie = true
+                break
             }
         }
         return result
@@ -151,17 +148,16 @@ class TrackParser {
                 note.Pitches.splice(index, 1)
             })
         }
-        const pitchLength = note.Pitches.length
-        for (let i = 0; i < length; i++) {
+        for (const pitch of pitches) {
             result.push({
                 Type: 'Note',
-                Pitch: pitches[i],
+                Pitch: pitch,
                 Volume: this.Settings.Volume * this.CurrentInstrument.Proportion,
                 Duration: note.duration,
                 StartTime: this.Context.startTime
             })
         }
-        this.Context.startTime += duration
+        this.Context.startTime += note.duration
     }
 
     /**
@@ -203,5 +199,8 @@ class TrackParser {
         return duration
     }
 }
+
+TrackParser.pitchDict = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 }
+TrackParser.pitchOperatorDict = {'#': 1, 'b': -1, '\'': 12, ',': -12}
 
 module.exports = Parser
