@@ -28,11 +28,6 @@ module.exports = {
     Dur(scale) {
         AssignSetting(this, 'Duration', scale, Criteria.Dur)
     },
-    Stac(restProportion, index = 1) {
-        if (typeof restProportion !== 'number') throw new TypeError('Non-numeric value passed in as Stac')
-        if (!Criteria.Stac(restProportion)) throw new RangeError('Stac out of range')
-        this.Stac[index] = restProportion
-    },
     Acct(scale) {
         AssignSetting(this, 'Accent', scale, Criteria.Acct)
     },
@@ -62,6 +57,12 @@ module.exports = {
     },
     getVar(key, defaultValue = null) {
         return this.Var[key] ? this.Var[key] : defaultValue
+    },
+    Stac(restProportion, index = 1) {
+        if (typeof restProportion !== 'number') throw new TypeError('Non-numeric value passed in as Stac')
+        if (!Criteria.Stac(restProportion)) throw new RangeError('Stac out of range')
+        if (![0, 1, 2].indexOf(index)) throw new RangeError('Stac index out of range')
+        this.Stac[index] = restProportion
     },
 }
 
