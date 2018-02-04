@@ -1,5 +1,5 @@
 declare namespace SMML {
-    interface MetaInfo {
+    interface FileMetaInfo {
         [key: string]: any
         Title?: string
         Left?: string
@@ -51,7 +51,7 @@ declare namespace SMML {
 
     interface TokenizedData {
         Comments: string[]
-        MetaInformation: MetaInfo
+        FileMeta: FileMetaInfo
         Library: Library[]
         Sections: Section[]
     }
