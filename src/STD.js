@@ -1,4 +1,16 @@
 module.exports = {
+    Tremolo1 () {
+
+    },
+
+    Tremolo2 (expr, subtrack) {
+
+    },
+
+    Portamento (subtrack1, subtrack2) {
+
+    },
+
     Vol(volume) {
         AssignSetting(this, 'Volume', volume / 100, Criteria.Vol)
     },

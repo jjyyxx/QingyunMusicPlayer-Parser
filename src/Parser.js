@@ -1,3 +1,5 @@
+const STD = require('./STD')
+
 class Parser {
     /**
      * Parser
@@ -103,9 +105,9 @@ class TrackParser {
         for (var token of contents) {
             switch (token.Type) {
             case 'FUNCTION':
-                this.Settings.tokenUpdate(token)
+                applyFunction(this.Settings, token)
                 break
-            case 'SubTrack':
+            case 'Subtrack':
                 result.push(...this.parseTrackContent(token.Contents)) //子音轨也要返回 Meta，含 Duration 和头尾未完全小节拍数
                 break
             case 'Note':
@@ -115,6 +117,8 @@ class TrackParser {
             case 'Tie':
                 this.Context.afterTie = true
                 break
+            case 'BarLine':
+                
             }
         }
         return result
@@ -207,5 +211,16 @@ class TrackParser {
 
 TrackParser.pitchDict = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 }
 TrackParser.pitchOperatorDict = {'#': 1, 'b': -1, '\'': 12, ',': -12}
+
+function applyFunction (setting, token) {
+    return STD[token.Name].apply(setting, token.Argument.map((arg) => {
+        switch (arg.Type) {
+        case 'String':
+            return arg.Content
+        case 'Expression':
+            return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // FIXME: damn the log2
+        }
+    }))
+}
 
 module.exports = { Parser, TrackParser }

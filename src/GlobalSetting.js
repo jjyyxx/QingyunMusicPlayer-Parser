@@ -1,5 +1,3 @@
-const STD = require('./STD')
-
 class GlobalSetting {
     constructor({
         Key = 0,
@@ -48,17 +46,6 @@ class GlobalSetting {
 
     update(settingObj) {
         Object.assign(this, settingObj)
-    }
-
-    tokenUpdate(token) {
-        STD[token.Name].apply(this, token.Argument.map((arg) => {
-            switch (arg.Type) {
-            case 'String':
-                return arg.Content
-            case 'Expression':
-                return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // FIXME: damn the log2
-            }
-        }))
     }
 }
 
