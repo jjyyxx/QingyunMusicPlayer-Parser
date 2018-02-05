@@ -58,14 +58,6 @@ class Parser {
 class TrackParser {
     /**
      * 
-     * @param {SMML.ParsedNote[]} contents 
-     */
-    static calculateDuration(contents) {
-        return contents.reduce((sum, cur) => sum + cur.Duration, 0)
-    }
-
-    /**
-     * 
      * @param {SMML.Track} track 
      * @param {SMML.GlobalSetting} sectionSettings
      */
@@ -94,7 +86,7 @@ class TrackParser {
                 Meta: {
                     FadeIn: this.Settings.FadeIn,
                     FadeOut: this.Settings.FadeOut,
-                    Duration: TrackParser.calculateDuration(Contents)
+                    Duration: this.Context.startTime
                 }
             })
         }
@@ -110,6 +102,9 @@ class TrackParser {
         const result = []
         for (var token of contents) {
             switch (token.Type) {
+            case 'FUNCTION':
+                this.Settings.tokenUpdate(token)
+                break
             case 'SubTrack':
                 result.push(...this.parseTrackContent(token.Contents)) //子音轨也要返回 Meta，含 Duration 和头尾未完全小节拍数
                 break
@@ -134,9 +129,9 @@ class TrackParser {
         const result = []
         const pitches = []
         note.duration = this.parseDuration(note)
+        note.pitchDelta = this.parseDeltaPitch(note.PitchOperators)
         for (const pitch of note.Pitches) {
-            pitch.PitchOperators += note.PitchOperators
-            pitches.push(this.parsePitch(pitch))
+            pitches.push(this.parsePitch(pitch) + note.pitchDelta)
         }
         if (this.Context.afterTie) {
             this.Context.afterTie = false
@@ -158,6 +153,7 @@ class TrackParser {
             })
         }
         this.Context.startTime += note.duration
+        return result
     }
 
     /**
@@ -166,7 +162,11 @@ class TrackParser {
      * @returns {number}
      */
     parsePitch (pitch) {
-        return this.Settings.Key + this.Settings.Octave * 12 + TrackParser.pitchDict[pitch.ScaleDegree] + pitch.PitchOperators.split('').reduce((sum, cur) => sum + TrackParser.pitchOperatorDict[cur], 0)
+        return this.Settings.Key + this.Settings.Octave * 12 + TrackParser.pitchDict[pitch.ScaleDegree] + this.parseDeltaPitch(pitch.PitchOperators)
+    }
+
+    parseDeltaPitch (pitchOperators) {
+        return pitchOperators.split('').reduce((sum, cur) => sum + TrackParser.pitchOperatorDict[cur], 0)
     }
 
     /**
@@ -177,23 +177,28 @@ class TrackParser {
     parseDuration (note) {
         let duration = 1
         let pointer = 0
+        let dotCount = 0
         const length = note.DurationOperators.length
         while (pointer < length) {
             const char = note.DurationOperators.charAt(pointer)
-            if (char === '-') {
+            switch (char) {
+            case '-':
                 duration += 1
                 pointer += 1
-            } else if (char === '_') {
+                break
+            case '_':
                 duration /= 2
                 pointer += 1
-            } else if (char === '.') {
-                let dotCount = 1
+                break
+            case '.':
+                dotCount = 1
                 pointer += 1
                 while (note.DurationOperators.charAt(pointer) === '.') {
                     dotCount += 1
                     pointer += 1
                 }
                 duration *= 2 - Math.pow(2, -dotCount)
+                break
             }
         }
         return duration
@@ -203,4 +208,4 @@ class TrackParser {
 TrackParser.pitchDict = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 }
 TrackParser.pitchOperatorDict = {'#': 1, 'b': -1, '\'': 12, ',': -12}
 
-module.exports = Parser
+module.exports = { Parser, TrackParser }
