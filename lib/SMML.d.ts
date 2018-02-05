@@ -64,8 +64,7 @@ declare namespace SMML {
         Beat: number
         Bar: number
         Duration: number
-        Stac1: number
-        Stac2: number
+        Stac: number[]
         Accent: number
         Light: number
         Appo: number

@@ -5,7 +5,7 @@ class Parser {
      * Parser
      * @param {SMML.TokenizedData} tokenizedData 
      */
-    constructor (tokenizedData) {
+    constructor(tokenizedData) {
         this.tokenizedData = tokenizedData
         this.Libraries = this.loadLibrary(this.tokenizedData.Library)
         this.result = {
@@ -18,7 +18,7 @@ class Parser {
      * 
      * @param {SMML.Library[]} libs 
      */
-    loadLibrary (libs) {
+    loadLibrary(libs) {
         return libs.map((lib) => {
             if (lib.Type === 'Internal') {
                 return lib
@@ -32,11 +32,11 @@ class Parser {
      * load external lib
      * @param {SMML.Library} libs 
      */
-    loadExternalLibrary (lib) {
-        throw new Error ('Not implemented!')
+    loadExternalLibrary(lib) {
+        throw new Error('Not implemented!')
     }
 
-    parse () {
+    parse() {
         this.result.Sections = this.tokenizedData.Sections.map((section) => this.parseSection(section))
     }
 
@@ -44,7 +44,7 @@ class Parser {
      * parse section
      * @param {SMML.Section} section
      */
-    parseSection (section) {
+    parseSection(section) {
         this.SectionContext = {
             Settings: section.Settings
         }
@@ -63,7 +63,7 @@ class TrackParser {
      * @param {SMML.Track} track 
      * @param {SMML.GlobalSetting} sectionSettings
      */
-    constructor (track, sectionSettings) {
+    constructor(track, sectionSettings) {
         this.ID = track.ID
         this.Instruments = track.Instruments
         this.Contents = track.Contents
@@ -76,7 +76,7 @@ class TrackParser {
         }
     }
 
-    parseTrack () {
+    parseTrack() {
         const result = []
         for (const Instrument of this.Instruments) {
             this.CurrentInstrument = Instrument
@@ -100,7 +100,7 @@ class TrackParser {
      * @param {(SMML.BaseToken | SMML.SubTrack)[]} contents
      * @returns {SMML.ParsedNote[]}
      */
-    parseTrackContent (contents) {
+    parseTrackContent(contents) {
         const result = []
         for (var token of contents) {
             switch (token.Type) {
@@ -118,7 +118,7 @@ class TrackParser {
                 this.Context.afterTie = true
                 break
             case 'BarLine':
-                
+
             }
         }
         return result
@@ -129,16 +129,18 @@ class TrackParser {
      * @param {SMML.NoteToken} note
      * @returns {SMML.ParsedNote[]}
      */
-    parseNote (note) {  // FIXME: more branch
+    parseNote(note) {  // FIXME: more branch
         const result = []
         const pitches = []
         const duration = this.parseDuration(note)
+        const actualDuration = duration * this.Settings.Stac[note.Staccato]
         const pitchDelta = this.parseDeltaPitch(note.PitchOperators)
         for (const pitch of note.Pitches) {
             if (pitch.ChordNotations === '') {
                 pitches.push(this.parsePitch(pitch) + pitchDelta)
             } else {
-                
+                const basePitch = this.parsePitch(pitch) + pitchDelta
+                pitches.push(...this.parseChord(pitch).map((subPitch) => subPitch + basePitch))
             }
         }
         if (this.Context.afterTie) {
@@ -150,14 +152,14 @@ class TrackParser {
                 pitches.splice(index, 1)
             })
         }
-        const volumeScale = 1   // FIXME: parse VolumeOperators
+        const volumeScale = note.VolumeOperators.split('').reduce((sum, cur) => sum * cur === '>' ? this.Settings.Accent : cur === ':' ? this.Settings.Light : 1, 1)
         const volume = this.Settings.Volume * this.CurrentInstrument.Proportion * volumeScale
         for (const pitch of pitches) {
             result.push({
                 Type: 'Note',
                 Pitch: pitch,
                 Volume: volume,
-                Duration: duration,
+                Duration: actualDuration,
                 StartTime: this.Context.startTime
             })
         }
@@ -167,14 +169,24 @@ class TrackParser {
 
     /**
      * 
+     * @param {SMML.Pitch} pitch 
+     * @returns {number[]}
+     */
+    parseChord (pitch) {
+        const pitches = TrackParser.chordNotationsDict[pitch.ChordNotations]
+        return pitches
+        // TODO: support ChordOperators
+    }
+    /**
+     * 
      * @param {SMML.Pitch} pitch
      * @returns {number}
      */
-    parsePitch (pitch) {
+    parsePitch(pitch) {
         return this.Settings.Key + this.Settings.Octave * 12 + TrackParser.pitchDict[pitch.ScaleDegree] + this.parseDeltaPitch(pitch.PitchOperators)
     }
 
-    parseDeltaPitch (pitchOperators) {
+    parseDeltaPitch(pitchOperators) {
         return pitchOperators.split('').reduce((sum, cur) => sum + TrackParser.pitchOperatorDict[cur], 0)
     }
 
@@ -183,7 +195,7 @@ class TrackParser {
      * @param {SMML.NoteToken} note
      * @returns {number}
      */
-    parseDuration (note) {
+    parseDuration(note) {
         let duration = 1
         let pointer = 0
         let dotCount = 0
@@ -215,9 +227,17 @@ class TrackParser {
 }
 
 TrackParser.pitchDict = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 }
-TrackParser.pitchOperatorDict = {'#': 1, 'b': -1, '\'': 12, ',': -12}
+TrackParser.pitchOperatorDict = { '#': 1, 'b': -1, '\'': 12, ',': -12 }
+TrackParser.chordNotationsDict = {
+    M: [0, 4, 7],
+    m: [0, 3, 7],
+    a: [0, 4, 8],
+    d: [0, 3, 6],
+    o: [0, 12],
+    p: [0, 7, 12]
+}   // TODO: move to suitable place later
 
-function applyFunction (setting, token) {
+function applyFunction(setting, token) {
     return STD[token.Name].apply(setting, token.Argument.map((arg) => {
         switch (arg.Type) {
         case 'String':
