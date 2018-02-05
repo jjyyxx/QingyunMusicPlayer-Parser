@@ -3,7 +3,7 @@ const STD = require('./STD')
 class Parser {
     /**
      * Parser
-     * @param {SMML.TokenizedData} tokenizedData 
+     * @param {SMML.TokenizedData} tokenizedData
      */
     constructor(tokenizedData) {
         this.tokenizedData = tokenizedData
@@ -15,8 +15,8 @@ class Parser {
     }
 
     /**
-     * 
-     * @param {SMML.Library[]} libs 
+     *
+     * @param {SMML.Library[]} libs
      */
     loadLibrary(libs) {
         return libs.map((lib) => {
@@ -30,7 +30,7 @@ class Parser {
 
     /**
      * load external lib
-     * @param {SMML.Library} libs 
+     * @param {SMML.Library} libs
      */
     loadExternalLibrary(lib) {
         throw new Error('Not implemented!')
@@ -59,8 +59,33 @@ class Parser {
 
 class TrackParser {
     /**
-     * 
-     * @param {SMML.Track} track 
+    *
+    * @param {SMML.Pitch} pitch
+    * @returns {number[]}
+    */
+    static parseChord (pitch) {
+        const pitches = TrackParser.chordNotationsDict[pitch.ChordNotations]
+        if (pitch.ChordOperators === '') return pitches
+        const operators = TrackParser.chordOperatorsDict[pitch.ChordOperators]
+        const pitchResult = []
+        operators.forEach(([head, tail, delta]) => {
+            if (head > 0) {
+                head -= 1
+            }
+            if (tail > 0) {
+                pitchResult.push(...pitches.slice(head, tail).map((pitch) => pitch + delta))
+            } else if (tail === -1) {
+                pitchResult.push(...pitches.slice(head).map((pitch) => pitch + delta))
+            } else {
+                pitchResult.push(...pitches.slice(head, tail + 1).map((pitch) => pitch + delta))
+            }
+        })
+        return pitchResult
+    }
+
+    /**
+     *
+     * @param {SMML.Track} track
      * @param {SMML.GlobalSetting} sectionSettings
      */
     constructor(track, sectionSettings) {
@@ -125,11 +150,11 @@ class TrackParser {
     }
 
     /**
-     * 
+     *
      * @param {SMML.NoteToken} note
      * @returns {SMML.ParsedNote[]}
      */
-    parseNote(note) {  // FIXME: more branch
+    parseNote(note) {  // FIXME: Arpeggio
         const result = []
         const pitches = []
         const duration = this.parseDuration(note)
@@ -140,7 +165,7 @@ class TrackParser {
                 pitches.push(this.parsePitch(pitch) + pitchDelta)
             } else {
                 const basePitch = this.parsePitch(pitch) + pitchDelta
-                pitches.push(...this.parseChord(pitch).map((subPitch) => subPitch + basePitch))
+                pitches.push(...TrackParser.parseChord(pitch).map((subPitch) => subPitch + basePitch))
             }
         }
         if (this.Context.afterTie) {
@@ -168,17 +193,7 @@ class TrackParser {
     }
 
     /**
-     * 
-     * @param {SMML.Pitch} pitch 
-     * @returns {number[]}
-     */
-    parseChord (pitch) {
-        const pitches = TrackParser.chordNotationsDict[pitch.ChordNotations]
-        return pitches
-        // TODO: support ChordOperators
-    }
-    /**
-     * 
+     *
      * @param {SMML.Pitch} pitch
      * @returns {number}
      */
@@ -191,7 +206,7 @@ class TrackParser {
     }
 
     /**
-     * 
+     *
      * @param {SMML.NoteToken} note
      * @returns {number}
      */
@@ -233,8 +248,13 @@ TrackParser.chordNotationsDict = {
     m: [0, 3, 7],
     a: [0, 4, 8],
     d: [0, 3, 6],
-    o: [0, 12],
     p: [0, 7, 12]
+}   // TODO: move to suitable place later
+TrackParser.chordOperatorsDict = {
+    o: [[0, -1, 0], [1, 1, 12]],
+    u: [[-1, -1, -12], [0, -1, 0]],
+    i: [[1, 1, 12], [2, -1, 0]],
+    j: [[1, 2, 12], [3, -1, 0]],
 }   // TODO: move to suitable place later
 
 function applyFunction(setting, token) {
@@ -243,7 +263,7 @@ function applyFunction(setting, token) {
         case 'String':
             return arg.Content
         case 'Expression':
-            return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // potential vulnerable
+            return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // potentially vulnerable
         }
     }))
 }

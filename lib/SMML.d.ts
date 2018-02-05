@@ -88,8 +88,6 @@ declare namespace SMML {
         Type: "Note"
         Pitches: Pitch[]
         PitchOperators: string
-        ChordNotations: string
-        ChordOperators: string
         DurationOperators: string
         VolumeOperators: string
         Staccato: number
