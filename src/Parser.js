@@ -1,5 +1,6 @@
 const STD = require('./STD')
 const Loader = require('./LibLoader')
+const { FixedLengthQueue } = require('./Util')
 
 class Parser {
     /**
@@ -75,7 +76,8 @@ class TrackParser {
         this.Context = {
             afterTie: false,
             notesBeforeTie: [],
-            startTime: 0
+            startTime: 0,
+            pitchQueue: new FixedLengthQueue(this.Settings.Trace)
         }
     }
 
@@ -138,14 +140,23 @@ class TrackParser {
         const duration = this.parseDuration(note)
         const actualDuration = duration * this.Settings.Stac[note.Staccato]
         const pitchDelta = this.parseDeltaPitch(note.PitchOperators)
-        for (const pitch of note.Pitches) {
-            if (pitch.ChordNotations === '') {
-                pitches.push(this.parsePitch(pitch) + pitchDelta)
-            } else {
-                const basePitch = this.parsePitch(pitch) + pitchDelta
-                pitches.push(...TrackParser.parseChord(pitch).map((subPitch) => subPitch + basePitch))
+        if (note.Pitches.length === 1 && note.Pitches[0].ScaleDegree === '-1') {
+            pitches.push(...this.Context.pitchQueue.first())
+        } else {
+            for (const pitch of note.Pitches) {
+                if (pitch.ScaleDegree === '0') continue
+                if (pitch.ScaleDegree === '10') {
+                    pitches.push(NaN)
+                }
+                if (pitch.ChordNotations === '') {
+                    pitches.push(this.parsePitch(pitch) + pitchDelta)
+                } else {
+                    const basePitch = this.parsePitch(pitch) + pitchDelta
+                    pitches.push(...TrackParser.parseChord(pitch).map((subPitch) => subPitch + basePitch))
+                }
             }
         }
+        this.Context.pitchQueue.push(pitches.slice(0))
         if (this.Context.afterTie) {
             this.Context.afterTie = false
             this.Context.notesBeforeTie.forEach((prevNote) => {

@@ -10,5 +10,7 @@ WIP
 - [x] Setting-only function
 - [ ] Track with repeat and skip
 - [ ] Subtrack functions (Port, Trem)
-- [ ] Chord Operator
+- [x] Chord Operator
+- [x] Special scaledegree -1 0 10
+- [x] Arpeggio
 - [ ] External lib
