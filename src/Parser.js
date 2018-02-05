@@ -132,31 +132,36 @@ class TrackParser {
     parseNote (note) {  // FIXME: more branch
         const result = []
         const pitches = []
-        note.duration = this.parseDuration(note)
-        note.pitchDelta = this.parseDeltaPitch(note.PitchOperators)
+        const duration = this.parseDuration(note)
+        const pitchDelta = this.parseDeltaPitch(note.PitchOperators)
         for (const pitch of note.Pitches) {
-            pitches.push(this.parsePitch(pitch) + note.pitchDelta)
+            if (pitch.ChordNotations === '') {
+                pitches.push(this.parsePitch(pitch) + pitchDelta)
+            } else {
+                
+            }
         }
         if (this.Context.afterTie) {
             this.Context.afterTie = false
             this.Context.notesBeforeTie.forEach((prevNote) => {
                 const index = pitches.indexOf(prevNote.Pitch)
                 if (index === -1) return
-                prevNote.Duration += note.duration
+                prevNote.Duration += duration
                 pitches.splice(index, 1)
-                note.Pitches.splice(index, 1)
             })
         }
+        const volumeScale = 1   // FIXME: parse VolumeOperators
+        const volume = this.Settings.Volume * this.CurrentInstrument.Proportion * volumeScale
         for (const pitch of pitches) {
             result.push({
                 Type: 'Note',
                 Pitch: pitch,
-                Volume: this.Settings.Volume * this.CurrentInstrument.Proportion,
-                Duration: note.duration,
+                Volume: volume,
+                Duration: duration,
                 StartTime: this.Context.startTime
             })
         }
-        this.Context.startTime += note.duration
+        this.Context.startTime += duration
         return result
     }
 
@@ -218,7 +223,7 @@ function applyFunction (setting, token) {
         case 'String':
             return arg.Content
         case 'Expression':
-            return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // FIXME: damn the log2
+            return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // potential vulnerable
         }
     }))
 }
