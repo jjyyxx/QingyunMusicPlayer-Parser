@@ -1,4 +1,5 @@
 const STD = require('./STD')
+const Loader = require('./LibLoader')
 
 class Parser {
     /**
@@ -7,37 +8,16 @@ class Parser {
      */
     constructor(tokenizedData) {
         this.tokenizedData = tokenizedData
-        this.Libraries = this.loadLibrary(this.tokenizedData.Library)
+        this.Libraries = new Loader(this.tokenizedData.Library)
         this.result = {
             Sections: undefined
         }
         this.SectionContext = undefined
     }
 
-    /**
-     *
-     * @param {SMML.Library[]} libs
-     */
-    loadLibrary(libs) {
-        return libs.map((lib) => {
-            if (lib.Type === 'Internal') {
-                return lib
-            } else {
-                return this.loadExternalLibrary(lib)
-            }
-        })
-    }
-
-    /**
-     * load external lib
-     * @param {SMML.Library} libs
-     */
-    loadExternalLibrary(lib) {
-        throw new Error('Not implemented!')
-    }
-
     parse() {
         this.result.Sections = this.tokenizedData.Sections.map((section) => this.parseSection(section))
+        return this.result
     }
 
     /**
@@ -53,8 +33,6 @@ class Parser {
             Tracks: [].concat(...section.Tracks.map((track) => new TrackParser(track, section.Settings/* FIXME: create a duplicate instead of passing ref directly*/).parseTrack()))
         }
     }
-
-
 }
 
 class TrackParser {
