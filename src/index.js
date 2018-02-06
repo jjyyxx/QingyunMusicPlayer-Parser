@@ -1,6 +1,7 @@
 const fs = require('fs')
 const { Parser, TrackParser } = require('./Parser')
 const GlobalSetting = require('./GlobalSetting')
+const LibLoader = require('./LibLoader')
 
 fs.readFile(__dirname + '/testcase/test.json', 'utf8', (err, data) => {
     const jsonData = JSON.parse(data)
@@ -13,6 +14,6 @@ fs.readFile(__dirname + '/testcase/test.json', 'utf8', (err, data) => {
         }],
         Contents: jsonData
     }
-    const trackParser = new TrackParser(track, new GlobalSetting())
+    const trackParser = new TrackParser(track, new GlobalSetting(), new LibLoader().load())
     console.log(JSON.stringify(trackParser.parseTrack()))
 })

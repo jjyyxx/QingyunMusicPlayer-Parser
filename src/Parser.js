@@ -1,6 +1,7 @@
 const STD = require('./STD')
 const Loader = require('./LibLoader')
 const { FixedLengthQueue } = require('./Util')
+const GlobalSetting = require('./GlobalSetting')
 
 class Parser {
     /**
@@ -9,7 +10,7 @@ class Parser {
      */
     constructor(tokenizedData) {
         this.tokenizedData = tokenizedData
-        this.Libraries = new Loader(this.tokenizedData.Library)
+        this.Libraries = new Loader(this.tokenizedData.Library).load()
         this.result = {
             Sections: undefined
         }
@@ -26,50 +27,38 @@ class Parser {
      * @param {SMML.Section} section
      */
     parseSection(section) {
+        const settings = new GlobalSetting()
+        for (const token of section.Settings) {
+            switch (token.Type) {
+            case 'FUNCTION':
+                applyFunction(settings, token)
+                break
+            case 'RepeatBegin':
+                break
+            case 'Volta':
+                break
+            }
+        }
         this.SectionContext = {
-            Settings: section.Settings
+            Settings: settings
         }
         return {
             ID: section.ID,
-            Tracks: [].concat(...section.Tracks.map((track) => new TrackParser(track, section.Settings/* FIXME: create a duplicate instead of passing ref directly*/).parseTrack()))
+            Tracks: [].concat(...section.Tracks.map((track) => new TrackParser(track, settings.extend(), this.Libraries).parseTrack()))
         }
     }
 }
 
 class TrackParser {
     /**
-    *
-    * @param {SMML.Pitch} pitch
-    * @returns {number[]}
-    */
-    static parseChord (pitch) {
-        const pitches = TrackParser.chordNotationsDict[pitch.ChordNotations]
-        if (pitch.ChordOperators === '') return pitches
-        const operators = TrackParser.chordOperatorsDict[pitch.ChordOperators]
-        const pitchResult = []
-        operators.forEach(([head, tail, delta]) => {
-            if (head > 0) {
-                head -= 1
-            }
-            if (tail > 0) {
-                pitchResult.push(...pitches.slice(head, tail).map((pitch) => pitch + delta))
-            } else if (tail === -1) {
-                pitchResult.push(...pitches.slice(head).map((pitch) => pitch + delta))
-            } else {
-                pitchResult.push(...pitches.slice(head, tail + 1).map((pitch) => pitch + delta))
-            }
-        })
-        return pitchResult
-    }
-
-    /**
      *
      * @param {SMML.Track} track
      * @param {SMML.GlobalSetting} sectionSettings
      */
-    constructor(track, sectionSettings) {
+    constructor(track, sectionSettings, libraries) {
         this.ID = track.ID
         this.Instruments = track.Instruments
+        this.Libraries = libraries
         this.Contents = track.Contents
         this.Settings = sectionSettings
         this.CurrentInstrument = undefined
@@ -139,6 +128,8 @@ class TrackParser {
         const pitches = []
         const duration = this.parseDuration(note)
         const actualDuration = duration * this.Settings.Stac[note.Staccato]
+
+        // calculate pitch array and record it for further trace
         const pitchDelta = this.parseDeltaPitch(note.PitchOperators)
         if (note.Pitches.length === 1 && note.Pitches[0].ScaleDegree === '-1') {
             pitches.push(...this.Context.pitchQueue.first())
@@ -146,7 +137,7 @@ class TrackParser {
             for (const pitch of note.Pitches) {
                 if (pitch.ScaleDegree === '0') continue
                 if (pitch.ScaleDegree === '10') {
-                    pitches.push(NaN)
+                    pitches.push(null)
                 }
                 if (pitch.ChordNotations === '') {
                     pitches.push(this.parsePitch(pitch) + pitchDelta)
@@ -157,6 +148,8 @@ class TrackParser {
             }
         }
         this.Context.pitchQueue.push(pitches.slice(0))
+
+        // merge pitches with previous ones if tie exists
         if (this.Context.afterTie) {
             this.Context.afterTie = false
             this.Context.notesBeforeTie.forEach((prevNote) => {
@@ -166,6 +159,7 @@ class TrackParser {
                 pitches.splice(index, 1)
             })
         }
+
         const volumeScale = note.VolumeOperators.split('').reduce((sum, cur) => sum * cur === '>' ? this.Settings.Accent : cur === ':' ? this.Settings.Light : 1, 1)
         const volume = this.Settings.Volume * this.CurrentInstrument.Proportion * volumeScale
         for (const pitch of pitches) {
@@ -179,6 +173,31 @@ class TrackParser {
         }
         this.Context.startTime += duration
         return result
+    }
+
+    /**
+    *
+    * @param {SMML.Pitch} pitch
+    * @returns {number[]}
+    */
+    parseChord (pitch) {
+        const pitches = this.Libraries.ChordNotations[pitch.ChordNotations]
+        if (pitch.ChordOperators === '') return pitches
+        const operators = this.Libraries.ChordOperators[pitch.ChordOperators]
+        const pitchResult = []
+        operators.forEach(([head, tail, delta]) => {
+            if (head > 0) {
+                head -= 1
+            }
+            if (tail > 0) {
+                pitchResult.push(...pitches.slice(head, tail).map((pitch) => pitch + delta))
+            } else if (tail === -1) {
+                pitchResult.push(...pitches.slice(head).map((pitch) => pitch + delta))
+            } else {
+                pitchResult.push(...pitches.slice(head, tail + 1).map((pitch) => pitch + delta))
+            }
+        })
+        return pitchResult
     }
 
     /**
@@ -229,22 +248,8 @@ class TrackParser {
         return duration
     }
 }
-
 TrackParser.pitchDict = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 }
 TrackParser.pitchOperatorDict = { '#': 1, 'b': -1, '\'': 12, ',': -12 }
-TrackParser.chordNotationsDict = {
-    M: [0, 4, 7],
-    m: [0, 3, 7],
-    a: [0, 4, 8],
-    d: [0, 3, 6],
-    p: [0, 7, 12]
-}   // TODO: move to suitable place later
-TrackParser.chordOperatorsDict = {
-    o: [[0, -1, 0], [1, 1, 12]],
-    u: [[-1, -1, -12], [0, -1, 0]],
-    i: [[1, 1, 12], [2, -1, 0]],
-    j: [[1, 2, 12], [3, -1, 0]],
-}   // TODO: move to suitable place later
 
 function applyFunction(setting, token) {
     return STD[token.Name].apply(setting, token.Argument.map((arg) => {
