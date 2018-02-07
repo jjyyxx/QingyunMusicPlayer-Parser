@@ -150,6 +150,14 @@ class TrackParser {
      * @returns {SMML.ParsedTrack} 
      */
     parseSubtrack (subtrack) {
+        if (subtrack.Repeat < 0) {
+            return this.parseNegativeSubTrack(subtrack)
+        } else {
+            return this.parsePositiveSubTrack(subtrack)
+        }
+    }
+
+    parsePositiveSubTrack (subtrack) {
         const result = []
         let leftIncomplete = 0
         let rightIncomplete = undefined
@@ -157,144 +165,76 @@ class TrackParser {
         let subtrackTemp
         let duration = 0
         let noteDuration
-        if (subtrack.Repeat < 0) {
-            for (let i = 0; i < - subtrack.Repeat; i++) {
-                for (const token of subtrack.Contents) {
-                    switch (token.Type) {
-                    case 'FUNCTION':
-                        applyFunction(this.Settings, token)
-                        break
-                    case 'Subtrack':
-                        subtrackTemp = this.parseSubtrack(token)
-                        duration += subtrackTemp.Meta.Duration
-                        if (subtrackTemp.Meta.Single) {
-                            if (leftFirst) {
-                                leftIncomplete += subtrackTemp.Meta.Incomplete[0]
-                            } else {
-                                rightIncomplete += subtrackTemp.Meta.Incomplete[0]
-                            }
-                        } else {
-                            if (leftFirst) {
-                                leftIncomplete += subtrackTemp.Meta.Incomplete[0]
-                                leftFirst = false
-                                rightIncomplete = subtrackTemp.Meta.Incomplete[1]
-                            } else {
-                                rightIncomplete += subtrackTemp.Meta.Incomplete[0]
-                                if (!this.isLegalBar(rightIncomplete)) this.Context.warnings.push(new Error('Not enough'))
-                                rightIncomplete = subtrackTemp.Meta.Incomplete[1]
-                            }
-                        }
-                        result.push(subtrackTemp.Contents)
-                        break
-                    case 'Note':
-                        noteDuration = this.parseDuration(token)
-                        duration += noteDuration
+        for (let i = 1; i <= subtrack.Repeat; i++) {
+            let skip = false
+            for (const token of subtrack.Contents) {
+                if (skip && (token.Type !== 'BarLine' || (token.Order.indexOf(i) === -1))) continue
+                switch (token.Type) {
+                case 'FUNCTION':
+                    applyFunction(this.Settings, token)
+                    break
+                case 'Subtrack':
+                    subtrackTemp = this.parseSubtrack(token)
+                    duration += subtrackTemp.Meta.Duration
+                    if (subtrackTemp.Meta.Single) {
                         if (leftFirst) {
-                            leftIncomplete += noteDuration
+                            leftIncomplete += subtrackTemp.Meta.Incomplete[0]
                         } else {
-                            rightIncomplete += noteDuration
+                            rightIncomplete += subtrackTemp.Meta.Incomplete[0]
                         }
-                        this.Context.notesBeforeTie = this.parseNote(token)
-                        result.push(...this.Context.notesBeforeTie)
-                        break
-                    case 'Tie':
-                        this.Context.afterTie = true
-                        break
-                    case 'BarLine':
-                        leftFirst = false
-                        if (!this.isLegalBar(rightIncomplete)) {
-                            this.Context.warnings.push(new Error('Not enough'))
-                        }
-                        rightIncomplete = 0                        
-                        break
-                    case 'PedalPress':
-                    case 'PedalRelease':
-                        result.push({
-                            Type: token.Type,
-                            StartTime: this.Context.startTime
-                        })
-                        break
-                    case 'Clef':
-                    case 'Whitespace':
-                    case 'Undefined':
-                        break
-                    }
-                    if ((i === - subtrack.Repeat - 1) && (token.Skip === true)) break
-                }
-            }
-        } else {
-            for (let i = 1; i <= subtrack.Repeat; i++) {
-                let skip = false
-                for (const token of subtrack.Contents) {
-                    if (skip && (token.Type !== 'BarLine' || (token.Order.indexOf(i) === -1))) continue
-                    switch (token.Type) {
-                    case 'FUNCTION':
-                        applyFunction(this.Settings, token)
-                        break
-                    case 'Subtrack':
-                        subtrackTemp = this.parseSubtrack(token)
-                        duration += subtrackTemp.Meta.Duration
-                        if (subtrackTemp.Meta.Single) {
-                            if (leftFirst) {
-                                leftIncomplete += subtrackTemp.Meta.Incomplete[0]
-                            } else {
-                                rightIncomplete += subtrackTemp.Meta.Incomplete[0]
-                            }
-                        } else {
-                            if (leftFirst) {
-                                leftIncomplete += subtrackTemp.Meta.Incomplete[0]
-                                leftFirst = false
-                                rightIncomplete = subtrackTemp.Meta.Incomplete[1]
-                            } else {
-                                rightIncomplete += subtrackTemp.Meta.Incomplete[0]
-                                if (!this.isLegalBar(rightIncomplete)) this.Context.warnings.push(new Error('Not enough'))
-                                rightIncomplete = subtrackTemp.Meta.Incomplete[1]
-                            }
-                        }
-                        result.push(subtrackTemp.Contents)
-                        break
-                    case 'Note':
-                        noteDuration = this.parseDuration(token)
-                        duration += noteDuration
+                    } else {
                         if (leftFirst) {
-                            leftIncomplete += noteDuration
+                            leftIncomplete += subtrackTemp.Meta.Incomplete[0]
+                            leftFirst = false
+                            rightIncomplete = subtrackTemp.Meta.Incomplete[1]
                         } else {
-                            rightIncomplete += noteDuration
+                            rightIncomplete += subtrackTemp.Meta.Incomplete[0]
+                            if (!this.isLegalBar(rightIncomplete)) this.Context.warnings.push(new Error('Not enough'))
+                            rightIncomplete = subtrackTemp.Meta.Incomplete[1]
                         }
-                        this.Context.notesBeforeTie = this.parseNote(token)
-                        result.push(...this.Context.notesBeforeTie)
-                        break
-                    case 'Tie':
-                        this.Context.afterTie = true
-                        break
-                    case 'BarLine':
-                        leftFirst = false
-                        if (!this.isLegalBar(rightIncomplete)) {
-                            this.Context.warnings.push(new Error('Not enough'))
-                        }
-                        rightIncomplete = 0
-                        if (skip) {
-                            skip = false
-                        } else {
-                            skip = token.Order.length > 0 && token.Order.indexOf(i) === -1
-                        }
-                        break
-                    case 'PedalPress':
-                    case 'PedalRelease':
-                        result.push({
-                            Type: token.Type,
-                            StartTime: this.Context.startTime
-                        })
-                        break
-                    case 'Clef':
-                    case 'Whitespace':
-                    case 'Undefined':
-                        break
                     }
+                    result.push(subtrackTemp.Contents)
+                    break
+                case 'Note':
+                    noteDuration = this.parseDuration(token)
+                    duration += noteDuration
+                    if (leftFirst) {
+                        leftIncomplete += noteDuration
+                    } else {
+                        rightIncomplete += noteDuration
+                    }
+                    this.Context.notesBeforeTie = this.parseNote(token)
+                    result.push(...this.Context.notesBeforeTie)
+                    break
+                case 'Tie':
+                    this.Context.afterTie = true
+                    break
+                case 'BarLine':
+                    leftFirst = false
+                    if (!this.isLegalBar(rightIncomplete)) {
+                        this.Context.warnings.push(new Error('Not enough'))
+                    }
+                    rightIncomplete = 0
+                    if (skip) {
+                        skip = false
+                    } else {
+                        skip = token.Order.length > 0 && token.Order.indexOf(i) === -1
+                    }
+                    break
+                case 'PedalPress':
+                case 'PedalRelease':
+                    result.push({
+                        Type: token.Type,
+                        StartTime: this.Context.startTime
+                    })
+                    break
+                case 'Clef':
+                case 'Whitespace':
+                case 'Undefined':
+                    break
                 }
             }
         }
-        
         return {
             Contents: result,
             Meta: {
@@ -305,6 +245,87 @@ class TrackParser {
         }
     }
 
+    parseNegativeSubTrack (subtrack) {
+        const result = []
+        let leftIncomplete = 0
+        let rightIncomplete = undefined
+        let leftFirst = true
+        let subtrackTemp
+        let duration = 0
+        let noteDuration
+        for (let i = 0; i < - subtrack.Repeat; i++) {
+            for (const token of subtrack.Contents) {
+                switch (token.Type) {
+                case 'FUNCTION':
+                    applyFunction(this.Settings, token)
+                    break
+                case 'Subtrack':
+                    subtrackTemp = this.parseSubtrack(token)
+                    duration += subtrackTemp.Meta.Duration
+                    if (subtrackTemp.Meta.Single) {
+                        if (leftFirst) {
+                            leftIncomplete += subtrackTemp.Meta.Incomplete[0]
+                        } else {
+                            rightIncomplete += subtrackTemp.Meta.Incomplete[0]
+                        }
+                    } else {
+                        if (leftFirst) {
+                            leftIncomplete += subtrackTemp.Meta.Incomplete[0]
+                            leftFirst = false
+                            rightIncomplete = subtrackTemp.Meta.Incomplete[1]
+                        } else {
+                            rightIncomplete += subtrackTemp.Meta.Incomplete[0]
+                            if (!this.isLegalBar(rightIncomplete)) this.Context.warnings.push(new Error('Not enough'))
+                            rightIncomplete = subtrackTemp.Meta.Incomplete[1]
+                        }
+                    }
+                    result.push(subtrackTemp.Contents)
+                    break
+                case 'Note':
+                    noteDuration = this.parseDuration(token)
+                    duration += noteDuration
+                    if (leftFirst) {
+                        leftIncomplete += noteDuration
+                    } else {
+                        rightIncomplete += noteDuration
+                    }
+                    this.Context.notesBeforeTie = this.parseNote(token)
+                    result.push(...this.Context.notesBeforeTie)
+                    break
+                case 'Tie':
+                    this.Context.afterTie = true
+                    break
+                case 'BarLine':
+                    leftFirst = false
+                    if (!this.isLegalBar(rightIncomplete)) {
+                        this.Context.warnings.push(new Error('Not enough'))
+                    }
+                    rightIncomplete = 0                        
+                    break
+                case 'PedalPress':
+                case 'PedalRelease':
+                    result.push({
+                        Type: token.Type,
+                        StartTime: this.Context.startTime
+                    })
+                    break
+                case 'Clef':
+                case 'Whitespace':
+                case 'Undefined':
+                    break
+                }
+                if ((i === - subtrack.Repeat - 1) && (token.Skip === true)) break
+            }
+        }
+        return {
+            Contents: result,
+            Meta: {
+                Duration: duration,
+                Single: leftFirst,
+                Incomplete: [leftIncomplete, rightIncomplete]
+            }
+        }
+    }
     /**
      *
      * @param {SMML.NoteToken} note
