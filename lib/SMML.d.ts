@@ -10,8 +10,16 @@ declare namespace SMML {
     interface Library {
         Type: string
         Storage: "Internal" | "External"
-        Data?: any
-        Path?: string
+    }
+
+    interface InternalLibrary extends Library{
+        Storage: "Internal"
+        Data: any
+    }
+
+    interface ExternalLibrary extends Library{
+        Storage: "External"
+        Path: string
     }
 
     interface Track {
@@ -82,6 +90,17 @@ declare namespace SMML {
         StartTime: number
         Duration: number
         Volume: number
+    }
+
+    interface ParsedTrack {
+        Meta: {
+            FadeIn: number,
+            FadeOut: number,
+            Duration: number,
+            Incomplete: number[],
+            Single: boolean
+        },
+        Contents: ParsedNote[]
     }
 
     interface NoteToken {
