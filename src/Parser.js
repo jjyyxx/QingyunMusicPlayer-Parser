@@ -1,6 +1,5 @@
 const Loader = require('./LibLoader')
 const GlobalSetting = require('./GlobalSetting')
-const { applyFunction } = require('./Util')
 const TrackParser = require('./TrackParser')
 
 class Parser {

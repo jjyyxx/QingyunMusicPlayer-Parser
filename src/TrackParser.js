@@ -2,6 +2,36 @@ const { FixedLengthQueue } = require('./Util')
 
 class TrackParser {
     /**
+     * 
+     * @param {SMML.ParsedTrack} trackResult 
+     */
+    static processPedal (trackResult) {
+        const contents = trackResult.Contents
+        let press
+        let release
+        while (true) {
+            press = contents.findIndex((tok) => tok.Type === 'PedalPress')
+            release = contents.findIndex((tok) => tok.Type === 'PedalRelease')
+            if (press === -1) break
+            if (release === -1) {
+                const dur = trackResult.Meta.Duration - contents[press].StartTime
+                contents.splice(press, 1)
+                contents.slice(press).forEach((tok) => tok.Duration = dur)
+                break
+            }
+            while (release < press) {
+                contents.splice(release, 1)
+                release = contents.findIndex((tok) => tok.Type === 'PedalRelease')
+                press -= 1
+            }
+            const dur = contents[release].StartTime - contents[press].StartTime
+            contents.splice(release, 1)
+            contents.splice(press, 1)
+            contents.slice(press, release).forEach((tok) => tok.Duration = dur)
+        }
+    }
+
+    /**
      *
      * @param {SMML.Track} track
      * @param {SMML.GlobalSetting} sectionSettings
@@ -42,6 +72,7 @@ class TrackParser {
         for (const Instrument of this.Instruments) {
             this.CurrentInstrument = Instrument
             const trackResult = this.parseTrackContent(this.Contents)
+            TrackParser.processPedal(trackResult)
             result.push(trackResult)
         }
         return result
