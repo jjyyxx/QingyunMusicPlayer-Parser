@@ -1,4 +1,4 @@
-const { FixedLengthQueue, applyFunction } = require('./Util')
+const { FixedLengthQueue } = require('./Util')
 
 class TrackParser {
     /**
@@ -63,7 +63,7 @@ class TrackParser {
         for (var token of contents) {
             switch (token.Type) {
             case 'FUNCTION':
-                applyFunction(this.Settings, token)
+                this.Libraries.FunctionPackage.applyFunction(this.Settings, token)
                 break
             case 'Subtrack':
                 subtrackTemp = this.parseSubtrack(token)
@@ -171,7 +171,7 @@ class TrackParser {
                 if (skip && (token.Type !== 'BarLine' || (token.Order.indexOf(i) === -1))) continue
                 switch (token.Type) {
                 case 'FUNCTION':
-                    applyFunction(this.Settings, token)
+                    this.Libraries.FunctionPackage.applyFunction(this.Settings, token)
                     break
                 case 'Subtrack':
                     subtrackTemp = this.parseSubtrack(token)
@@ -257,7 +257,7 @@ class TrackParser {
             for (const token of subtrack.Contents) {
                 switch (token.Type) {
                 case 'FUNCTION':
-                    applyFunction(this.Settings, token)
+                    this.Libraries.FunctionPackage.applyFunction(this.Settings, token)
                     break
                 case 'Subtrack':
                     subtrackTemp = this.parseSubtrack(token)
