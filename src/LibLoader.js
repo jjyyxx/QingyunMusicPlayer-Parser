@@ -45,24 +45,24 @@ class LibLoader {
      */
     loadInternalLibrary(lib) {
         switch (lib.Type) {
-        case LibLoader.libType.ChordNotation:
-            lib.Data.forEach((notation) => {
-                this.result.ChordNotation[notation.Notation] = notation.Pitches
-            })
-            break
-        case LibLoader.libType.ChordOperator:
-            lib.Data.forEach((operator) => {
-                this.result.ChordOperator[operator.Notation] = operator.Pitches
-            })
-            break
-        case LibLoader.libType.MetaInformation:
-            break
-        case LibLoader.libType.FunctionPackage:
-            break
-        case LibLoader.libType.MIDIEventList:
-            break
-        case LibLoader.libType.Library:
-            Object.assign(this.result, new LibLoader(lib.Data, false).load())
+            case LibLoader.libType.ChordNotation:
+                lib.Data.forEach((notation) => {
+                    this.result.ChordNotation[notation.Notation] = notation.Pitches
+                })
+                break
+            case LibLoader.libType.ChordOperator:
+                lib.Data.forEach((operator) => {
+                    this.result.ChordOperator[operator.Notation] = operator.Pitches
+                })
+                break
+            case LibLoader.libType.MetaInformation:
+                break
+            case LibLoader.libType.FunctionPackage:
+                break
+            case LibLoader.libType.MIDIEventList:
+                break
+            case LibLoader.libType.Library:
+                Object.assign(this.result, new LibLoader(lib.Data, false).load())
         }
     }
 
@@ -74,24 +74,24 @@ class LibLoader {
         if (existsSync(lib.Path)) {
             const content = readFileSync(lib.Path, 'utf8')
             switch (lib.Type) {
-            case LibLoader.libType.ChordNotation:
-                JSON.parse(content).forEach((notation) => {
-                    this.result.ChordNotation[notation.Notation] = notation.Pitches
-                })
-                break
-            case LibLoader.libType.ChordOperator:
-                JSON.parse(content).forEach((operator) => {
-                    this.result.ChordOperator[operator.Notation] = operator.Pitches
-                })
-                break
-            case LibLoader.libType.MetaInformation:
-                break
-            case LibLoader.libType.FunctionPackage:
-                break
-            case LibLoader.libType.MIDIEventList:
-                break
-            case LibLoader.libType.Library:
-                Object.assign(this.result, new LibLoader(JSON.parse(content), false).load())
+                case LibLoader.libType.ChordNotation:
+                    JSON.parse(content).forEach((notation) => {
+                        this.result.ChordNotation[notation.Notation] = notation.Pitches
+                    })
+                    break
+                case LibLoader.libType.ChordOperator:
+                    JSON.parse(content).forEach((operator) => {
+                        this.result.ChordOperator[operator.Notation] = operator.Pitches
+                    })
+                    break
+                case LibLoader.libType.MetaInformation:
+                    break
+                case LibLoader.libType.FunctionPackage:
+                    break
+                case LibLoader.libType.MIDIEventList:
+                    break
+                case LibLoader.libType.Library:
+                    Object.assign(this.result, new LibLoader(JSON.parse(content), false).load())
             }
         }
     }
@@ -123,13 +123,15 @@ LibLoader.Default = {
     MetaInformation: {},
     FunctionPackage: {
         STD: require('./STD'),
-        applyFunction (setting, token) {
-            return this.STD[token.Name].apply(setting, token.Argument.map((arg) => {
+        applyFunction(parser, token) {
+            return this.STD[token.Name].apply(parser, token.Argument.map((arg) => {
                 switch (arg.Type) {
                 case 'String':
                     return arg.Content
                 case 'Expression':
                     return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // potentially vulnerable
+                default:
+                    return arg
                 }
             }))
         }

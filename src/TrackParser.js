@@ -96,7 +96,7 @@ class TrackParser {
         for (var token of contents) {
             switch (token.Type) {
             case 'FUNCTION':
-                this.handleSubtrack(this.Libraries.FunctionPackage.applyFunction(this.Settings, token), localContext)
+                this.handleSubtrack(this.Libraries.FunctionPackage.applyFunction(this, token), localContext)
                 result.push(...localContext.subtrackTemp.Contents)
                 break
             case 'Subtrack':
@@ -224,7 +224,7 @@ class TrackParser {
                 if (skip && (token.Type !== 'BarLine' || (token.Order.indexOf(i) === -1))) continue
                 switch (token.Type) {
                 case 'FUNCTION':
-                    this.handleSubtrack(this.Libraries.FunctionPackage.applyFunction(this.Settings, token), localContext)
+                    this.handleSubtrack(this.Libraries.FunctionPackage.applyFunction(this, token), localContext)
                     result.push(...localContext.subtrackTemp.Contents)
                     break
                 case 'Subtrack':
@@ -285,7 +285,7 @@ class TrackParser {
             for (const token of subtrack.Contents) {
                 switch (token.Type) {
                 case 'FUNCTION':
-                    this.handleSubtrack(this.Libraries.FunctionPackage.applyFunction(this.Settings, token), localContext)
+                    this.handleSubtrack(this.Libraries.FunctionPackage.applyFunction(this, token), localContext)
                     result.push(...localContext.subtrackTemp.Contents)
                     break
                 case 'Subtrack':
@@ -333,10 +333,41 @@ class TrackParser {
      * @returns {SMML.ParsedNote[]}
      */
     parseNote(note) {  // FIXME: Arpeggio
+        const {pitches, duration, actualDuration, volume} = this.parseNotePurePart(note)
+
+        this.Context.pitchQueue.push(pitches.slice(0))
+
+        // merge pitches with previous ones if tie exists
+        if (this.Context.afterTie) {
+            this.Context.afterTie = false
+            this.Context.notesBeforeTie.forEach((prevNote) => {
+                const index = pitches.indexOf(prevNote.Pitch)
+                if (index === -1) return
+                prevNote.Duration += duration
+                pitches.splice(index, 1)
+            })
+        }
+
         const result = []
+        for (const pitch of pitches) {
+            result.push({
+                Type: 'Note',
+                Pitch: pitch,
+                Volume: volume,
+                Duration: actualDuration,
+                StartTime: this.Context.startTime
+            })
+        }
+        this.Context.startTime += duration
+        return result
+    }
+
+    parseNotePurePart (note) {
         const pitches = []
         const duration = this.parseDuration(note)
         const actualDuration = duration * this.Settings.Stac[note.Staccato]
+        const volumeScale = note.VolumeOperators.split('').reduce((sum, cur) => sum * cur === '>' ? this.Settings.Accent : cur === ':' ? this.Settings.Light : 1, 1)
+        const volume = this.Settings.Volume * this.CurrentInstrument.Proportion * volumeScale
 
         // calculate pitch array and record it for further trace
         const pitchDelta = this.parseDeltaPitch(note.PitchOperators)
@@ -352,36 +383,16 @@ class TrackParser {
                     pitches.push(this.parsePitch(pitch) + pitchDelta)
                 } else {
                     const basePitch = this.parsePitch(pitch) + pitchDelta
-                    pitches.push(...TrackParser.parseChord(pitch).map((subPitch) => subPitch + basePitch))
+                    pitches.push(...this.parseChord(pitch).map((subPitch) => subPitch + basePitch))
                 }
             }
         }
-        this.Context.pitchQueue.push(pitches.slice(0))
-
-        // merge pitches with previous ones if tie exists
-        if (this.Context.afterTie) {
-            this.Context.afterTie = false
-            this.Context.notesBeforeTie.forEach((prevNote) => {
-                const index = pitches.indexOf(prevNote.Pitch)
-                if (index === -1) return
-                prevNote.Duration += duration
-                pitches.splice(index, 1)
-            })
+        return {
+            pitches,
+            duration,
+            actualDuration,
+            volume
         }
-
-        const volumeScale = note.VolumeOperators.split('').reduce((sum, cur) => sum * cur === '>' ? this.Settings.Accent : cur === ':' ? this.Settings.Light : 1, 1)
-        const volume = this.Settings.Volume * this.CurrentInstrument.Proportion * volumeScale
-        for (const pitch of pitches) {
-            result.push({
-                Type: 'Note',
-                Pitch: pitch,
-                Volume: volume,
-                Duration: actualDuration,
-                StartTime: this.Context.startTime
-            })
-        }
-        this.Context.startTime += duration
-        return result
     }
 
     /**
@@ -390,9 +401,9 @@ class TrackParser {
     * @returns {number[]}
     */
     parseChord (pitch) {
-        const pitches = this.Libraries.ChordNotations[pitch.ChordNotations]
+        const pitches = this.Libraries.ChordNotation[pitch.ChordNotations]
         if (pitch.ChordOperators === '') return pitches
-        const operators = this.Libraries.ChordOperators[pitch.ChordOperators]
+        const operators = this.Libraries.ChordOperator[pitch.ChordOperators]
         const pitchResult = []
         operators.forEach(([head, tail, delta]) => {
             if (head > 0) {
