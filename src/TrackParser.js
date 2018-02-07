@@ -85,48 +85,26 @@ class TrackParser {
      */
     parseTrackContent(contents) {
         const result = []
-        let leftIncomplete = 0
-        let rightIncomplete = undefined
-        let leftFirst = true
-        let subtrackTemp
-        let duration = 0
-        let noteDuration
+        const localContext = {
+            leftIncomplete: 0,
+            rightIncomplete: undefined,
+            leftFirst: true,
+            subtrackTemp: undefined,
+            duration: 0,
+            noteDuration: undefined
+        }
         for (var token of contents) {
             switch (token.Type) {
             case 'FUNCTION':
-                this.Libraries.FunctionPackage.applyFunction(this.Settings, token)
+                this.handleSubtrack(this.Libraries.FunctionPackage.applyFunction(this.Settings, token), localContext)
+                result.push(...localContext.subtrackTemp.Contents)
                 break
             case 'Subtrack':
-                subtrackTemp = this.parseSubtrack(token)
-                duration += subtrackTemp.Meta.Duration
-                if (subtrackTemp.Meta.Single) {
-                    if (leftFirst) {
-                        leftIncomplete += subtrackTemp.Meta.Incomplete[0]
-                    } else {
-                        rightIncomplete += subtrackTemp.Meta.Incomplete[0]
-                    }
-                } else {
-                    if (leftFirst) {
-                        leftIncomplete += subtrackTemp.Meta.Incomplete[0]
-                        leftFirst = false
-                        rightIncomplete = subtrackTemp.Meta.Incomplete[1]
-                    } else {
-                        rightIncomplete += subtrackTemp.Meta.Incomplete[0]
-                        if (!this.isLegalBar(rightIncomplete)) this.Context.warnings.push(new Error('Not enough'))
-                        rightIncomplete = subtrackTemp.Meta.Incomplete[1]
-                    }
-                }
-                
-                result.push(subtrackTemp.Contents)
+                this.handleSubtrack(this.parseSubtrack(token), localContext)
+                result.push(...localContext.subtrackTemp.Contents)
                 break
             case 'Note':
-                noteDuration = this.parseDuration(token)
-                duration += noteDuration
-                if (leftFirst) {
-                    leftIncomplete += noteDuration
-                } else {
-                    rightIncomplete += noteDuration
-                }
+                this.handleNote(token, localContext)
                 this.Context.notesBeforeTie = this.parseNote(token)
                 result.push(...this.Context.notesBeforeTie)
                 break
@@ -134,13 +112,7 @@ class TrackParser {
                 this.Context.afterTie = true
                 break
             case 'BarLine':
-                leftFirst = false
-                if (token.Terminal !== true) {
-                    if (!this.isLegalBar(rightIncomplete)) {
-                        this.Context.warnings.push(new Error('Not enough'))
-                    }
-                    rightIncomplete = 0
-                }
+                this.handleBarLine(token, localContext)
                 break
             case 'PedalPress':
             case 'PedalRelease':
@@ -156,7 +128,7 @@ class TrackParser {
             }
         }
         
-        if (!((leftIncomplete === this.Settings.Bar && rightIncomplete === this.Settings.Bar) || (leftIncomplete + rightIncomplete === this.Settings.Bar))) {
+        if (!((localContext.leftIncomplete === this.Settings.Bar && localContext.rightIncomplete === this.Settings.Bar) || (localContext.leftIncomplete + localContext.rightIncomplete === this.Settings.Bar))) {
             this.Context.warnings.push(new Error('Not enough'))
         }
         return {
@@ -164,15 +136,63 @@ class TrackParser {
             Meta: {
                 FadeIn: this.Settings.FadeIn,
                 FadeOut: this.Settings.FadeOut,
-                Duration: duration,
-                Single: leftFirst,
-                Incomplete: [this.Settings.Bar - leftIncomplete, this.Settings.Bar - rightIncomplete]
+                Duration: localContext.duration,
+                Single: localContext.leftFirst,
+                Incomplete: [this.Settings.Bar - localContext.leftIncomplete, this.Settings.Bar - localContext.rightIncomplete]
             }
         }
     }
 
     isLegalBar (bar) {
         return bar === undefined || bar === this.Settings.Bar || bar === 0
+    }
+
+    handleSubtrack (subtrack, localContext) {
+        if (subtrack === undefined) {
+            localContext.subtrackTemp = {
+                Contents: []
+            }
+            return
+        }
+        localContext.subtrackTemp = subtrack
+        localContext.duration += localContext.subtrackTemp.Meta.Duration
+        if (localContext.subtrackTemp.Meta.Single) {
+            if (localContext.leftFirst) {
+                localContext.leftIncomplete += localContext.subtrackTemp.Meta.Incomplete[0]
+            } else {
+                localContext.rightIncomplete += localContext.subtrackTemp.Meta.Incomplete[0]
+            }
+        } else {
+            if (localContext.leftFirst) {
+                localContext.leftIncomplete += localContext.subtrackTemp.Meta.Incomplete[0]
+                localContext.leftFirst = false
+                localContext.rightIncomplete = localContext.subtrackTemp.Meta.Incomplete[1]
+            } else {
+                localContext.rightIncomplete += localContext.subtrackTemp.Meta.Incomplete[0]
+                if (!this.isLegalBar(localContext.rightIncomplete)) this.Context.warnings.push(new Error('Not enough'))
+                localContext.rightIncomplete = localContext.subtrackTemp.Meta.Incomplete[1]
+            }
+        }
+    }
+
+    handleNote (note, localContext) {
+        localContext.noteDuration = this.parseDuration(note)
+        localContext.duration += localContext.noteDuration
+        if (localContext.leftFirst) {
+            localContext.leftIncomplete += localContext.noteDuration
+        } else {
+            localContext.rightIncomplete += localContext.noteDuration
+        }
+    }
+
+    handleBarLine (barLine, localContext) {
+        localContext.leftFirst = false
+        if (barLine.Terminal !== true) {
+            if (!this.isLegalBar(localContext.rightIncomplete)) {
+                this.Context.warnings.push(new Error('Not enough'))
+            }
+            localContext.rightIncomplete = 0
+        }
     }
 
     /**
@@ -190,50 +210,29 @@ class TrackParser {
 
     parsePositiveSubTrack (subtrack) {
         const result = []
-        let leftIncomplete = 0
-        let rightIncomplete = undefined
-        let leftFirst = true
-        let subtrackTemp
-        let duration = 0
-        let noteDuration
+        const localContext = {
+            leftIncomplete: 0,
+            rightIncomplete: undefined,
+            leftFirst: true,
+            subtrackTemp: undefined,
+            duration: 0,
+            noteDuration: undefined
+        }
         for (let i = 1; i <= subtrack.Repeat; i++) {
             let skip = false
             for (const token of subtrack.Contents) {
                 if (skip && (token.Type !== 'BarLine' || (token.Order.indexOf(i) === -1))) continue
                 switch (token.Type) {
                 case 'FUNCTION':
-                    this.Libraries.FunctionPackage.applyFunction(this.Settings, token)
+                    this.handleSubtrack(this.Libraries.FunctionPackage.applyFunction(this.Settings, token), localContext)
+                    result.push(...localContext.subtrackTemp.Contents)
                     break
                 case 'Subtrack':
-                    subtrackTemp = this.parseSubtrack(token)
-                    duration += subtrackTemp.Meta.Duration
-                    if (subtrackTemp.Meta.Single) {
-                        if (leftFirst) {
-                            leftIncomplete += subtrackTemp.Meta.Incomplete[0]
-                        } else {
-                            rightIncomplete += subtrackTemp.Meta.Incomplete[0]
-                        }
-                    } else {
-                        if (leftFirst) {
-                            leftIncomplete += subtrackTemp.Meta.Incomplete[0]
-                            leftFirst = false
-                            rightIncomplete = subtrackTemp.Meta.Incomplete[1]
-                        } else {
-                            rightIncomplete += subtrackTemp.Meta.Incomplete[0]
-                            if (!this.isLegalBar(rightIncomplete)) this.Context.warnings.push(new Error('Not enough'))
-                            rightIncomplete = subtrackTemp.Meta.Incomplete[1]
-                        }
-                    }
-                    result.push(subtrackTemp.Contents)
+                    this.handleSubtrack(this.parseSubtrack(token), localContext)
+                    result.push(...localContext.subtrackTemp.Contents)
                     break
                 case 'Note':
-                    noteDuration = this.parseDuration(token)
-                    duration += noteDuration
-                    if (leftFirst) {
-                        leftIncomplete += noteDuration
-                    } else {
-                        rightIncomplete += noteDuration
-                    }
+                    this.handleNote(token, localContext)
                     this.Context.notesBeforeTie = this.parseNote(token)
                     result.push(...this.Context.notesBeforeTie)
                     break
@@ -241,11 +240,7 @@ class TrackParser {
                     this.Context.afterTie = true
                     break
                 case 'BarLine':
-                    leftFirst = false
-                    if (!this.isLegalBar(rightIncomplete)) {
-                        this.Context.warnings.push(new Error('Not enough'))
-                    }
-                    rightIncomplete = 0
+                    this.handleBarLine(token, localContext)
                     if (skip) {
                         skip = false
                     } else {
@@ -269,57 +264,36 @@ class TrackParser {
         return {
             Contents: result,
             Meta: {
-                Duration: duration,
-                Single: leftFirst,
-                Incomplete: [leftIncomplete, rightIncomplete]
+                Duration: localContext.duration,
+                Single: localContext.leftFirst,
+                Incomplete: [localContext.leftIncomplete, localContext.rightIncomplete]
             }
         }
     }
 
     parseNegativeSubTrack (subtrack) {
         const result = []
-        let leftIncomplete = 0
-        let rightIncomplete = undefined
-        let leftFirst = true
-        let subtrackTemp
-        let duration = 0
-        let noteDuration
-        for (let i = 0; i < - subtrack.Repeat; i++) {
+        const localContext = {
+            leftIncomplete: 0,
+            rightIncomplete: undefined,
+            leftFirst: true,
+            subtrackTemp: undefined,
+            duration: 0,
+            noteDuration: undefined
+        }
+        for (let i = 1; i <= - subtrack.Repeat; i++) {
             for (const token of subtrack.Contents) {
                 switch (token.Type) {
                 case 'FUNCTION':
-                    this.Libraries.FunctionPackage.applyFunction(this.Settings, token)
+                    this.handleSubtrack(this.Libraries.FunctionPackage.applyFunction(this.Settings, token), localContext)
+                    result.push(...localContext.subtrackTemp.Contents)
                     break
                 case 'Subtrack':
-                    subtrackTemp = this.parseSubtrack(token)
-                    duration += subtrackTemp.Meta.Duration
-                    if (subtrackTemp.Meta.Single) {
-                        if (leftFirst) {
-                            leftIncomplete += subtrackTemp.Meta.Incomplete[0]
-                        } else {
-                            rightIncomplete += subtrackTemp.Meta.Incomplete[0]
-                        }
-                    } else {
-                        if (leftFirst) {
-                            leftIncomplete += subtrackTemp.Meta.Incomplete[0]
-                            leftFirst = false
-                            rightIncomplete = subtrackTemp.Meta.Incomplete[1]
-                        } else {
-                            rightIncomplete += subtrackTemp.Meta.Incomplete[0]
-                            if (!this.isLegalBar(rightIncomplete)) this.Context.warnings.push(new Error('Not enough'))
-                            rightIncomplete = subtrackTemp.Meta.Incomplete[1]
-                        }
-                    }
-                    result.push(subtrackTemp.Contents)
+                    this.handleSubtrack(this.parseSubtrack(token), localContext)
+                    result.push(...localContext.subtrackTemp.Contents)
                     break
                 case 'Note':
-                    noteDuration = this.parseDuration(token)
-                    duration += noteDuration
-                    if (leftFirst) {
-                        leftIncomplete += noteDuration
-                    } else {
-                        rightIncomplete += noteDuration
-                    }
+                    this.handleNote(token, localContext)
                     this.Context.notesBeforeTie = this.parseNote(token)
                     result.push(...this.Context.notesBeforeTie)
                     break
@@ -327,11 +301,7 @@ class TrackParser {
                     this.Context.afterTie = true
                     break
                 case 'BarLine':
-                    leftFirst = false
-                    if (!this.isLegalBar(rightIncomplete)) {
-                        this.Context.warnings.push(new Error('Not enough'))
-                    }
-                    rightIncomplete = 0                        
+                    this.handleBarLine(token, localContext)
                     break
                 case 'PedalPress':
                 case 'PedalRelease':
@@ -345,15 +315,15 @@ class TrackParser {
                 case 'Undefined':
                     break
                 }
-                if ((i === - subtrack.Repeat - 1) && (token.Skip === true)) break
+                if ((i === - subtrack.Repeat) && (token.Skip === true)) break
             }
         }
         return {
             Contents: result,
             Meta: {
-                Duration: duration,
-                Single: leftFirst,
-                Incomplete: [leftIncomplete, rightIncomplete]
+                Duration: localContext.duration,
+                Single: localContext.leftFirst,
+                Incomplete: [localContext.leftIncomplete, localContext.rightIncomplete]
             }
         }
     }
