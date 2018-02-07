@@ -92,6 +92,17 @@ declare namespace SMML {
         Volume: number
     }
 
+    interface ParsedTrack {
+        Meta: {
+            FadeIn: number,
+            FadeOut: number,
+            Duration: number,
+            Incomplete: number[],
+            Single: boolean
+        },
+        Contents: ParsedNote[]
+    }
+
     interface NoteToken {
         Type: "Note"
         Pitches: Pitch[]
