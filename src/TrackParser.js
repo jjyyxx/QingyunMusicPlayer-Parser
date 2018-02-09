@@ -84,6 +84,7 @@ class TrackParser {
      */
     parseTrackContent(contents) {
         const result = []
+        let tempNote = undefined
         const localContext = {
             leftIncomplete: 0,
             rightIncomplete: undefined,
@@ -101,9 +102,16 @@ class TrackParser {
                 result.push(...localContext.subtrackTemp.Contents)
                 break
             case 'Note':
-                this.handleNote(token, localContext)
-                this.Context.notesBeforeTie = this.parseNote(token)
-                result.push(...this.Context.notesBeforeTie)
+                tempNote = this.parseNote(token)
+                if (!(tempNote instanceof Array)) {
+                    this.handleSubtrack(tempNote, localContext)
+                    result.push(...localContext.subtrackTemp.Contents)
+                } else {
+                    this.Context.notesBeforeTie = tempNote
+                    this.handleNote(token, localContext)
+                    result.push(...tempNote)
+                }
+
                 break
             case 'Tie':
                 this.Context.afterTie = true
@@ -137,7 +145,8 @@ class TrackParser {
                 FadeOut: this.Settings.FadeOut,
                 Duration: this.Context.startTime,
                 Single: localContext.leftFirst,
-                Incomplete: [localContext.leftIncomplete, localContext.rightIncomplete]
+                Incomplete: [localContext.leftIncomplete, localContext.rightIncomplete],
+                NotesBeforeTie: this.Context.notesBeforeTie
             }
         }
     }
@@ -161,6 +170,7 @@ class TrackParser {
         })
         this.Context.pitchQueue.push(...subtrack.Meta.PitchQueue)
         this.Context.startTime += subtrack.Meta.Duration
+        this.Context.notesBeforeTie = subtrack.Meta.NotesBeforeTie
         if (localContext.subtrackTemp.Meta.Single) {
             if (localContext.leftFirst) {
                 localContext.leftIncomplete += localContext.subtrackTemp.Meta.Incomplete[0]
@@ -204,7 +214,7 @@ class TrackParser {
      * @param {SMML.NoteToken} note
      * @returns {SMML.ParsedNote[]}
      */
-    parseNote(note) {  // FIXME: Arpeggio
+    parseNote(note) {
         const pitches = []
         const duration = this.parseDuration(note)
         const actualDuration = duration * this.Settings.Stac[note.Staccato]
@@ -217,6 +227,10 @@ class TrackParser {
             pitches.push(...this.Context.pitchQueue[this.Context.pitchQueue.length - this.Settings.Trace])
         } else {
             for (const pitch of note.Pitches) {
+                if (pitch.Pitch) {
+                    pitches.push(pitch.Pitch)
+                    continue
+                }
                 if (pitch.ScaleDegree === '0') continue
                 if (pitch.ScaleDegree === '10') {
                     pitches.push(null)
@@ -228,6 +242,34 @@ class TrackParser {
                 }
             }
         }
+
+        if (note.Arpeggio) {
+            const appo = []
+            const length = pitches.length
+            for (let i = 1; i < length; i++) {
+                appo.push({
+                    ...note,
+                    Pitches: pitches.slice(0, i).map((pitch) => ({Pitch: pitch})),
+                    Arpeggio: false,
+                    PitchOperators: ''
+                })
+            }
+            return this.Libraries.FunctionPackage.STD.Appoggiatura.apply(this, [{
+                Type: 'Subtrack',
+                Repeat: -1,
+                Contents: appo
+            }, {
+                Type: 'Subtrack',
+                Repeat: -1,
+                Contents: [{
+                    ...note,
+                    Pitches: pitches.map((pitch) => ({Pitch: pitch})),
+                    Arpeggio: false,
+                    PitchOperators: ''
+                }]
+            }])
+        }
+
         this.Context.pitchQueue.push(pitches.slice(0))
 
         // merge pitches with previous ones if tie exists
