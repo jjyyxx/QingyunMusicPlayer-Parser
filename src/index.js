@@ -15,5 +15,7 @@ fs.readFile(__dirname + '/testcase/test1.json', 'utf8', (err, data) => {
         Contents: jsonData
     }
     const trackParser = new TrackParser(track, new GlobalSetting(), new LibLoader().load())
-    console.log(JSON.stringify(trackParser.parseTrack()))
+    const json = JSON.stringify(trackParser.parseTrack())
+    fs.writeFile(__dirname + '/testcase/test1.out.json', json, 'utf8', () => {})
+    console.log(json)
 })

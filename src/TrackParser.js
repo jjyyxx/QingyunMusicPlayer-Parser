@@ -254,7 +254,7 @@ class TrackParser {
                     PitchOperators: ''
                 })
             }
-            return this.Libraries.FunctionPackage.STD.Appoggiatura.apply(this, [{
+            return this.Libraries.FunctionPackage.STD.GraceNote.apply(this, [{
                 Type: 'Subtrack',
                 Repeat: -1,
                 Contents: appo

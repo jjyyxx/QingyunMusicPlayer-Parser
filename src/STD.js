@@ -96,7 +96,7 @@ module.exports = {
         }
     },
 
-    Appoggiatura(subtrack1, subtrack2) {
+    GraceNote(subtrack1, subtrack2) {
         const t1 = new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack()
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
         const num = subtrack1.Contents.length
@@ -121,8 +121,31 @@ module.exports = {
         }
     },
 
-    GraceNote(subtrack1, subtrack2) {
+    Appoggiatura(subtrack1, subtrack2) {
+        const t1 = new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack()
+        const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
+        const num = subtrack2.Contents.length
+        let dur
+        if (num <= 4) {
+            dur = this.Settings.Appo / 4
+        } else {
+            dur = this.Settings.Appo / num
+        }
 
+        const total = dur * num
+        t1.Contents.forEach((note) => {
+            note.Duration -= total
+        })
+        t2.Contents.forEach((note) => {
+            note.Duration = dur
+            note.StartTime *= dur
+            note.StartTime += t1.Contents[0].Duration
+        })
+
+        return {
+            Contents: [...t1.Contents, ...t2.Contents],
+            Meta: t1.Meta
+        }
     },
 
     Vol(volume) {
