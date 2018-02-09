@@ -1,5 +1,5 @@
 const fs = require('fs')
-const TrackParser = require('./TrackParser')
+const { TrackParser } = require('./TrackParser')
 const GlobalSetting = require('./GlobalSetting')
 const LibLoader = require('./LibLoader')
 

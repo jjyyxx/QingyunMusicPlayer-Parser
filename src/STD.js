@@ -1,42 +1,67 @@
+const { SubtrackParser } = require('./TrackParser')
+
 module.exports = {
-    Tremolo1() {
+    Tremolo1 (expr, subtrack) {
 
     },
-
-    Tremolo2(expr, subtrack) {
+    
+    Tremolo2 (expr, subtrack1, subtrack2) {
 
     },
+    
+    Tuplet (expr, subtrack) {
 
-    Portamento(subtrack1, subtrack2) {
-        const { pitches: pitches1} = this.parseNotePurePart(subtrack1.Content[0])
-        const { pitches: pitches2, duration, volume } = this.parseNotePurePart(subtrack2.Content[0])
+    },
+    
+    Portamento (subtrack1, subtrack2) {
+        const t1 = new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack()
+        const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
+
+        const pitch1 = t1.Contents[0].Pitch
+        const pitch2 = t2.Contents[0].Pitch
+        const duration = t1.Meta.Duration
         const port = this.Settings.Port
-        const eachDuration = duration / port
-        const step = (pitches2[0] - pitches1[0]) / (port - 1)
+        const num = duration * port
+        const step = (pitch2 - pitch1) / (num - 1)
         const pitches = []
         for (let i = 0; i < port; i++) {
-            pitches.push(Math.round(pitches1[0] + step * i))
+            pitches.push(Math.round(pitch1 + step * i))
         }
+
         return {
-            Contents: pitches.map((pitch) => {
-                this.Context.startTime += eachDuration
+            Contents: pitches.map((pitch, index) => {
                 return {
                     Type: 'Note',
                     Pitch: pitch,
-                    Volume: volume,
-                    Duration: eachDuration,
-                    StartTime: this.Context.startTime - eachDuration
+                    Volume: t2.Contents[0].Volume,
+                    Duration: 1 / port,
+                    StartTime: index / port
                 }
             }),
             Meta: {
                 Duration: duration,
-                Incomplete: [],
-                Single: true
+                Incomplete: [duration],
+                Single: true,
+                Warnings: [],
+                PitchQueue: [...t1.Meta.PitchQueue, ...t2.Meta.PitchQueue]
             }
         }
-    },
 
-    Appoggiatura(subtrack) {
+
+        // const { pitches: pitches1} = this.parseNotePurePart(subtrack1.Content[0])
+        // const { pitches: pitches2, duration, volume } = this.parseNotePurePart(subtrack2.Content[0])
+        // const port = this.Settings.Port
+        // const eachDuration = duration / port
+        // const step =  / (port - 1)
+        
+
+    },
+    
+    Appoggiatura (subtrack1, subtrack2) {
+
+    },
+    
+    GraceNote (subtrack1, subtrack2) {
 
     },
 
