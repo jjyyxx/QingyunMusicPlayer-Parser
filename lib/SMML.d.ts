@@ -98,7 +98,9 @@ declare namespace SMML {
             FadeOut: number,
             Duration: number,
             Incomplete: number[],
-            Single: boolean
+            Single: boolean,
+            Warnings: Error[],
+            PitchQueue: number[][]
         },
         Contents: ParsedNote[]
     }

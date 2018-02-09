@@ -1,130 +1,180 @@
+const { SubtrackParser } = require('./TrackParser')
+
 module.exports = {
-    Tremolo1 () {
+    Tremolo1 (expr, subtrack) {
 
     },
-
-    Tremolo2 (expr, subtrack) {
+    
+    Tremolo2 (expr, subtrack1, subtrack2) {
 
     },
+    
+    Tuplet (expr, subtrack) {
 
+    },
+    
     Portamento (subtrack1, subtrack2) {
+        const t1 = new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack()
+        const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
+
+        const pitch1 = t1.Contents[0].Pitch
+        const pitch2 = t2.Contents[0].Pitch
+        const duration = t1.Meta.Duration
+        const port = this.Settings.Port
+        const num = duration * port
+        const step = (pitch2 - pitch1) / (num - 1)
+        const pitches = []
+        for (let i = 0; i < port; i++) {
+            pitches.push(Math.round(pitch1 + step * i))
+        }
+
+        return {
+            Contents: pitches.map((pitch, index) => {
+                return {
+                    Type: 'Note',
+                    Pitch: pitch,
+                    Volume: t2.Contents[0].Volume,
+                    Duration: 1 / port,
+                    StartTime: index / port
+                }
+            }),
+            Meta: {
+                Duration: duration,
+                Incomplete: [duration],
+                Single: true,
+                Warnings: [],
+                PitchQueue: [...t1.Meta.PitchQueue, ...t2.Meta.PitchQueue]
+            }
+        }
+
+
+        // const { pitches: pitches1} = this.parseNotePurePart(subtrack1.Content[0])
+        // const { pitches: pitches2, duration, volume } = this.parseNotePurePart(subtrack2.Content[0])
+        // const port = this.Settings.Port
+        // const eachDuration = duration / port
+        // const step =  / (port - 1)
+        
 
     },
+    
+    Appoggiatura (subtrack1, subtrack2) {
 
-    Appoggiatura (subtrack) {
+    },
+    
+    GraceNote (subtrack1, subtrack2) {
 
     },
 
     Vol(volume) {
-        AssignSetting(this, 'Volume', volume / 100, Criteria.Vol)
+        AssignSetting(this.Settings, 'Volume', volume / 100, Criteria.Vol)
     },
     Spd(speed) {
-        AssignSetting(this, 'Speed', speed, Criteria.Spd)
+        AssignSetting(this.Settings, 'Speed', speed, Criteria.Spd)
     },
     Key(key) {
-        AssignSetting(this, 'Key', key, Criteria.Key)
+        AssignSetting(this.Settings, 'Key', key, Criteria.Key)
     },
     Oct(oct) {
-        AssignSetting(this, 'Octave', oct, Criteria.Oct)
+        AssignSetting(this.Settings, 'Octave', oct, Criteria.Oct)
     },
     KeyOct(key, oct) {
-        AssignSetting(this, 'Key', Tonality[key], Criteria.Key)
-        AssignSetting(this, 'Octave', oct, Criteria.Oct)
+        AssignSetting(this.Settings, 'Key', Tonality[key], Criteria.Key)
+        AssignSetting(this.Settings, 'Octave', oct, Criteria.Oct)
     },
     Beat(beat) {
-        AssignSetting(this, 'Beat', beat, Criteria.Beat)
+        AssignSetting(this.Settings, 'Beat', beat, Criteria.Beat)
     },
     Bar(bar) {
-        AssignSetting(this, 'Bar', bar, Criteria.Bar)
+        AssignSetting(this.Settings, 'Bar', bar, Criteria.Bar)
     },
     BarBeat(bar, beat) {
-        AssignSetting(this, 'Bar', bar, Criteria.Bar)
-        AssignSetting(this, 'Beat', beat, Criteria.Beat)
+        AssignSetting(this.Settings, 'Bar', bar, Criteria.Bar)
+        AssignSetting(this.Settings, 'Beat', beat, Criteria.Beat)
     },
     Dur(scale) {
-        AssignSetting(this, 'Duration', scale, Criteria.Dur)
+        AssignSetting(this.Settings, 'Duration', scale, Criteria.Dur)
     },
     Acct(scale) {
-        AssignSetting(this, 'Accent', scale, Criteria.Acct)
+        AssignSetting(this.Settings, 'Accent', scale, Criteria.Acct)
     },
     Light(scale) {
-        AssignSetting(this, 'Light', scale, Criteria.Light)
+        AssignSetting(this.Settings, 'Light', scale, Criteria.Light)
     },
     Appo(r) {
-        AssignSetting(this, 'Appo', r, Criteria.Appo)
+        AssignSetting(this.Settings, 'Appo', r, Criteria.Appo)
     },
     Port(r) {
-        AssignSetting(this, 'Port', r, Criteria.Port)
+        AssignSetting(this.Settings, 'Port', r, Criteria.Port)
     },
     Trace(count) {
-        AssignSetting(this, 'Trace', count, Criteria.Trace)
+        AssignSetting(this.Settings, 'Trace', count, Criteria.Trace)
     },
     FadeIn(time) {
-        AssignSetting(this, 'FadeIn', time, Criteria.FadeIn)
+        AssignSetting(this.Settings, 'FadeIn', time, Criteria.FadeIn)
     },
     FadeOut(time) {
-        AssignSetting(this, 'FadeOut', time, Criteria.FadeOut)
+        AssignSetting(this.Settings, 'FadeOut', time, Criteria.FadeOut)
     },
     Rev(r) {
-        AssignSetting(this, 'Rev', r, Criteria.Rev)
+        AssignSetting(this.Settings, 'Rev', r, Criteria.Rev)
     },
     setVar(key, value) {
-        this.Var[key] = value
+        this.Settings.Var[key] = value
     },
     getVar(key, defaultValue = null) {
-        return this.Var[key] ? this.Var[key] : defaultValue
+        return this.Settings.Var[key] ? this.Var[key] : defaultValue
     },
     Stac(restProportion, index = 1) {
         if (typeof restProportion !== 'number') throw new TypeError('Non-numeric value passed in as Stac')
         if (!Criteria.Stac(restProportion)) throw new RangeError('Stac out of range')
         if (![0, 1, 2].indexOf(index)) throw new RangeError('Stac index out of range')
-        this.Stac[index] = restProportion
+        this.Settings.Stac[index] = restProportion
     },
 }
 
 const Criteria = {
-    Vol:     (volume) => volume <= 1 && volume >= 0,
-    Spd:     (speed) => speed > 0,
-    Key:     (key) => Number.isInteger(key),
-    Oct:     (octave) => Number.isInteger(octave),
-    Beat:    (beat) => beat > 0 && Number.isInteger(Math.log2(beat)),
-    Bar:     (bar) => bar > 0 && Number.isInteger(bar),
-    Dur:     (scale) => scale > 0,
-    Stac:    (restProportion) => restProportion >= 0 && restProportion <= 1,
-    Acct:    (scale) => scale > 1,
-    Light:   (scale) => scale < 1 && scale > 0,
-    Appo:    (r) => r > 0,
-    Port:    (r) => r > 0,
-    Trace:   (count) => count > 0 && count <= 4 && Number.isInteger(count),
-    FadeIn:  (time) => time > 0,
+    Vol: (volume) => volume <= 1 && volume >= 0,
+    Spd: (speed) => speed > 0,
+    Key: (key) => Number.isInteger(key),
+    Oct: (octave) => Number.isInteger(octave),
+    Beat: (beat) => beat > 0 && Number.isInteger(Math.log2(beat)),
+    Bar: (bar) => bar > 0 && Number.isInteger(bar),
+    Dur: (scale) => scale > 0,
+    Stac: (restProportion) => restProportion >= 0 && restProportion <= 1,
+    Acct: (scale) => scale > 1,
+    Light: (scale) => scale < 1 && scale > 0,
+    Appo: (r) => r > 0,
+    Port: (r) => r > 0,
+    Trace: (count) => count > 0 && count <= 4 && Number.isInteger(count),
+    FadeIn: (time) => time > 0,
     FadeOut: (time) => time > 0,
-    Rev:     () => true,
+    Rev: () => true,
 }
 const Tonality = {
-    'C':    0,
-    'G':    7,
-    'D':    2,
-    'A':    9,
-    'E':    4,
-    'B':    -1,
-    '#F':   6,
-    '#C':   1,
-    'F':    5,
-    'bB':   -2,
-    'bE':   3,
-    'bA':   8,
-    'bD':   1,
-    'bG':   6,
-    'bC':   -1,
+    'C': 0,
+    'G': 7,
+    'D': 2,
+    'A': 9,
+    'E': 4,
+    'B': -1,
+    '#F': 6,
+    '#C': 1,
+    'F': 5,
+    'bB': -2,
+    'bE': 3,
+    'bA': 8,
+    'bD': 1,
+    'bG': 6,
+    'bC': -1,
 
-    'F#':   6,
-    'C#':   1,
-    'Bb':   -2,
-    'Eb':   3,
-    'Ab':   8,
-    'Db':   1,
-    'Gb':   6,
-    'Cb':   -1,
+    'F#': 6,
+    'C#': 1,
+    'Bb': -2,
+    'Eb': 3,
+    'Ab': 8,
+    'Db': 1,
+    'Gb': 6,
+    'Cb': -1,
 }
 
 /**

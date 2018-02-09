@@ -1,9 +1,9 @@
 const fs = require('fs')
-const TrackParser = require('./TrackParser')
+const { TrackParser } = require('./TrackParser')
 const GlobalSetting = require('./GlobalSetting')
 const LibLoader = require('./LibLoader')
 
-fs.readFile(__dirname + '/testcase/test.json', 'utf8', (err, data) => {
+fs.readFile(__dirname + '/testcase/test1.json', 'utf8', (err, data) => {
     const jsonData = JSON.parse(data)
     const track = {
         ID: '1',
