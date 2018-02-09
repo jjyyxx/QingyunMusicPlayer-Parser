@@ -148,6 +148,10 @@ module.exports = {
         }
     },
 
+    ConOct(octave, volumeScale = 1) {
+        AssignSetting(this.Settings, 'ConOct', octave, Criteria.Oct)
+        AssignSetting(this.Settings, 'ConOctVolume', volumeScale, Criteria.ConOctVolume)
+    },
     Vol(volume) {
         AssignSetting(this.Settings, 'Volume', volume / 100, Criteria.Vol)
     },
@@ -232,6 +236,7 @@ const Criteria = {
     FadeIn: (time) => time > 0,
     FadeOut: (time) => time > 0,
     Rev: () => true,
+    ConOctVolume: (volume) => volume >= 0
 }
 const Tonality = {
     'C': 0,

@@ -15,7 +15,9 @@ class GlobalSetting {
         Oct = 0,
         FadeIn = 2,
         FadeOut = 2,
-        Rev = 0
+        Rev = 0,
+        ConOct = 0,
+        ConOctVolume = 1
     } = {}) {
         this.Key = Key
         this.Bar = Bar
@@ -33,6 +35,8 @@ class GlobalSetting {
         this.FadeIn = FadeIn
         this.FadeOut = FadeOut
         this.Rev = Rev
+        this.ConOct = ConOct
+        this.ConOctVolume = ConOctVolume
         this.Var = {}
     }
 
