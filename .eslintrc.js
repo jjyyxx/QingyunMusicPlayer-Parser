@@ -3,6 +3,11 @@ module.exports = {
         "es6": true,
         "node": true
     },
+    "parserOptions": {
+        "ecmaFeatures": {
+            "experimentalObjectRestSpread": true
+        }
+    },
     "extends": "eslint:recommended",
     "rules": {
         "indent": [

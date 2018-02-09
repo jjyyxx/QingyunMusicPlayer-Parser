@@ -1,5 +1,3 @@
-const STD = require('./STD')
-
 class FixedLengthQueue extends Array {
     /**
      * 
@@ -25,18 +23,6 @@ class FixedLengthQueue extends Array {
     }
 }
 
-function applyFunction(setting, token) {
-    return STD[token.Name].apply(setting, token.Argument.map((arg) => {
-        switch (arg.Type) {
-        case 'String':
-            return arg.Content
-        case 'Expression':
-            return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // potentially vulnerable
-        }
-    }))
-}
-
 module.exports = {
-    FixedLengthQueue,
-    applyFunction
+    FixedLengthQueue
 }

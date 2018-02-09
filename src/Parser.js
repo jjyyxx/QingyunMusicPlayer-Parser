@@ -1,6 +1,5 @@
 const Loader = require('./LibLoader')
 const GlobalSetting = require('./GlobalSetting')
-const { applyFunction } = require('./Util')
 const TrackParser = require('./TrackParser')
 
 class Parser {
@@ -31,7 +30,7 @@ class Parser {
         for (const token of section.Settings) {
             switch (token.Type) {
             case 'FUNCTION':
-                applyFunction(settings, token)
+                this.Libraries.FunctionPackage.applyFunction(settings, token)
                 break
             case 'RepeatBegin':
                 break

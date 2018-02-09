@@ -122,7 +122,19 @@ LibLoader.Default = {
     },
     MetaInformation: {},
     FunctionPackage: {
-        STD: require('./STD')
+        STD: require('./STD'),
+        applyFunction(parser, token) {
+            return this.STD[token.Name].apply(parser, token.Argument.map((arg) => {
+                switch (arg.Type) {
+                case 'String':
+                    return arg.Content
+                case 'Expression':
+                    return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // potentially vulnerable
+                default:
+                    return arg
+                }
+            }))
+        }
     },
     MIDIEventList: {},
     Library: {}
