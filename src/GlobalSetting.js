@@ -5,7 +5,7 @@ class GlobalSetting {
         Beat = 4,
         Speed = 90,
         Volume = 1.0,
-        Stac = [1, 1 / 2, 1 / 4],
+        Stac = [0, 1 / 2, 3 / 4],
         Port = 6,
         Appo = 1 / 4,
         Accent = 1,

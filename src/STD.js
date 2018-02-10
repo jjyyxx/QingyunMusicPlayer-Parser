@@ -1,4 +1,5 @@
 const { SubtrackParser } = require('./TrackParser')
+const { AssignSetting, Tonality } = require('./Util')
 
 module.exports = {
     Tremolo1(expr, subtrack) {
@@ -149,61 +150,61 @@ module.exports = {
     },
 
     ConOct(octave, volumeScale = 1) {
-        AssignSetting(this.Settings, 'ConOct', octave, Criteria.Oct)
-        AssignSetting(this.Settings, 'ConOctVolume', volumeScale, Criteria.ConOctVolume)
+        AssignSetting(this.Settings, 'ConOct', octave, (octave) => Number.isInteger(octave))
+        AssignSetting(this.Settings, 'ConOctVolume', volumeScale, (volume) => volume >= 0)
     },
     Vol(volume) {
-        AssignSetting(this.Settings, 'Volume', volume / 100, Criteria.Vol)
+        AssignSetting(this.Settings, 'Volume', volume / 100, (volume) => volume <= 1 && volume >= 0)
     },
     Spd(speed) {
-        AssignSetting(this.Settings, 'Speed', speed, Criteria.Spd)
+        AssignSetting(this.Settings, 'Speed', speed, (speed) => speed > 0)
     },
     Key(key) {
-        AssignSetting(this.Settings, 'Key', key, Criteria.Key)
+        AssignSetting(this.Settings, 'Key', key, (key) => Number.isInteger(key))
     },
     Oct(oct) {
-        AssignSetting(this.Settings, 'Octave', oct, Criteria.Oct)
+        AssignSetting(this.Settings, 'Octave', oct, (octave) => Number.isInteger(octave))
     },
     KeyOct(key, oct) {
-        AssignSetting(this.Settings, 'Key', Tonality[key], Criteria.Key)
-        AssignSetting(this.Settings, 'Octave', oct, Criteria.Oct)
+        AssignSetting(this.Settings, 'Key', Tonality[key], (key) => Number.isInteger(key))
+        AssignSetting(this.Settings, 'Octave', oct, (octave) => Number.isInteger(octave))
     },
     Beat(beat) {
-        AssignSetting(this.Settings, 'Beat', beat, Criteria.Beat)
+        AssignSetting(this.Settings, 'Beat', beat, (beat) => beat > 0 && Number.isInteger(Math.log2(beat)))
     },
     Bar(bar) {
-        AssignSetting(this.Settings, 'Bar', bar, Criteria.Bar)
+        AssignSetting(this.Settings, 'Bar', bar, (bar) => bar > 0 && Number.isInteger(bar))
     },
     BarBeat(bar, beat) {
-        AssignSetting(this.Settings, 'Bar', bar, Criteria.Bar)
-        AssignSetting(this.Settings, 'Beat', beat, Criteria.Beat)
+        AssignSetting(this.Settings, 'Bar', bar, (bar) => bar > 0 && Number.isInteger(bar))
+        AssignSetting(this.Settings, 'Beat', beat, (beat) => beat > 0 && Number.isInteger(Math.log2(beat)))
     },
     Dur(scale) {
-        AssignSetting(this.Settings, 'Duration', scale, Criteria.Dur)
+        AssignSetting(this.Settings, 'Duration', scale, (scale) => scale > 0)
     },
     Acct(scale) {
-        AssignSetting(this.Settings, 'Accent', scale, Criteria.Acct)
+        AssignSetting(this.Settings, 'Accent', scale, (scale) => scale > 1)
     },
     Light(scale) {
-        AssignSetting(this.Settings, 'Light', scale, Criteria.Light)
+        AssignSetting(this.Settings, 'Light', scale, (scale) => scale < 1 && scale > 0)
     },
     Appo(r) {
-        AssignSetting(this.Settings, 'Appo', r, Criteria.Appo)
+        AssignSetting(this.Settings, 'Appo', r, (r) => r > 0)
     },
     Port(r) {
-        AssignSetting(this.Settings, 'Port', r, Criteria.Port)
+        AssignSetting(this.Settings, 'Port', r, (r) => r > 0)
     },
     Trace(count) {
-        AssignSetting(this.Settings, 'Trace', count, Criteria.Trace)
+        AssignSetting(this.Settings, 'Trace', count, count > 0 && count <= 4 && Number.isInteger(count))
     },
     FadeIn(time) {
-        AssignSetting(this.Settings, 'FadeIn', time, Criteria.FadeIn)
+        AssignSetting(this.Settings, 'FadeIn', time, (time) => time >= 0)
     },
     FadeOut(time) {
-        AssignSetting(this.Settings, 'FadeOut', time, Criteria.FadeOut)
+        AssignSetting(this.Settings, 'FadeOut', time, (time) => time >= 0)
     },
     Rev(r) {
-        AssignSetting(this.Settings, 'Rev', r, Criteria.Rev)
+        AssignSetting(this.Settings, 'Rev', r, () => true)
     },
     setVar(key, value) {
         this.Settings.Var[key] = value
@@ -213,72 +214,8 @@ module.exports = {
     },
     Stac(restProportion, index = 1) {
         if (typeof restProportion !== 'number') throw new TypeError('Non-numeric value passed in as Stac')
-        if (!Criteria.Stac(restProportion)) throw new RangeError('Stac out of range')
+        if (!((restProportion) => restProportion >= 0 && restProportion <= 1)(restProportion)) throw new RangeError('Stac out of range')
         if (![0, 1, 2].indexOf(index)) throw new RangeError('Stac index out of range')
         this.Settings.Stac[index] = restProportion
-    },
+    }
 }
-
-const Criteria = {
-    Vol: (volume) => volume <= 1 && volume >= 0,
-    Spd: (speed) => speed > 0,
-    Key: (key) => Number.isInteger(key),
-    Oct: (octave) => Number.isInteger(octave),
-    Beat: (beat) => beat > 0 && Number.isInteger(Math.log2(beat)),
-    Bar: (bar) => bar > 0 && Number.isInteger(bar),
-    Dur: (scale) => scale > 0,
-    Stac: (restProportion) => restProportion >= 0 && restProportion <= 1,
-    Acct: (scale) => scale > 1,
-    Light: (scale) => scale < 1 && scale > 0,
-    Appo: (r) => r > 0,
-    Port: (r) => r > 0,
-    Trace: (count) => count > 0 && count <= 4 && Number.isInteger(count),
-    FadeIn: (time) => time > 0,
-    FadeOut: (time) => time > 0,
-    Rev: () => true,
-    ConOctVolume: (volume) => volume >= 0
-}
-const Tonality = {
-    'C': 0,
-    'G': 7,
-    'D': 2,
-    'A': 9,
-    'E': 4,
-    'B': -1,
-    '#F': 6,
-    '#C': 1,
-    'F': 5,
-    'bB': -2,
-    'bE': 3,
-    'bA': 8,
-    'bD': 1,
-    'bG': 6,
-    'bC': -1,
-
-    'F#': 6,
-    'C#': 1,
-    'Bb': -2,
-    'Eb': 3,
-    'Ab': 8,
-    'Db': 1,
-    'Gb': 6,
-    'Cb': -1,
-}
-
-/**
- * 
- * @param {SMML.GlobalSetting} globalSetting 
- * @param {string} key 
- * @param {number} value 
- * @param {function} criterion 
- */
-function AssignSetting(globalSetting, key, value, criterion) {
-    if (typeof value !== 'number') throw new TypeError(`Non-numeric value passed in as ${key}`)
-    if (!criterion(value)) throw new RangeError(`${key} out of range`)
-    globalSetting[key] = value
-}
-
-// consider using Proxy
-/* new Proxy({}, {
-    get (target, key) {}
-}) */
