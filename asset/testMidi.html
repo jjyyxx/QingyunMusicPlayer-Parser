@@ -13,20 +13,20 @@
 			reader.onload = function(event) {
 				var result = event.target.result;
 				var obj = JSON.parse(result);
-				var contents = obj[0]["Contents"];
+				var content = obj[0]["Content"];
 				var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 				var player = new WebAudioFontPlayer();
 				player.loader.decodeAfterLoading(audioCtx, '_tone_0000_SoundBlasterOld_sf2');
-				for(var i = 0; i < contents.length; i++) {
-					if (contents[i]["Type"] == "Note") {
+				for(var i = 0; i < content.length; i++) {
+					if (content[i]["Type"] == "Note") {
 						player.queueWaveTable(
 							audioCtx,
 							audioCtx.destination,
 							_tone_0000_SoundBlasterOld_sf2,
-							contents[i]["StartTime"],
-							contents[i]["Pitch"] + 60,
-							contents[i]["Duration"],
-							contents[i]["Volume"]
+							content[i]["StartTime"],
+							content[i]["Pitch"] + 60,
+							content[i]["Duration"],
+							content[i]["Volume"]
 						);
 					}
 				}

@@ -21,7 +21,7 @@ fs.readFile(path.join(path.resolve('./'), input), 'utf8', (err, data) => {
             Instrument: 'Piano',
             Proportion: 1
         }],
-        Contents: jsonData
+        Content: jsonData
     }
     const trackParser = new TrackParser(track, new GlobalSetting(), new LibLoader().load())
     const json = JSON.stringify(trackParser.parseTrack())

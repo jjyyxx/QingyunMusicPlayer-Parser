@@ -29,13 +29,13 @@ declare namespace SMML {
             Instrument: string
             Proportion: number
         }>
-        Contents: Array<BaseToken | SubTrack>
+        Content: Array<BaseToken | SubTrack>
     }
 
     interface SubTrack {
         Type: "SubTrack"
         Repeat: number
-        Contents: Array<BaseToken | SubTrack>
+        Content: Array<BaseToken | SubTrack>
     }
 
     interface BaseToken {
@@ -103,7 +103,7 @@ declare namespace SMML {
             PitchQueue: number[][]
         },
         Instrument: string
-        Contents: ParsedNote[]
+        Content: ParsedNote[]
     }
 
     interface NoteToken {

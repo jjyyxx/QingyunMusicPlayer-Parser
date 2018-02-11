@@ -11,16 +11,16 @@
 			reader.onload = function(event) {
 				var result = event.target.result;
 				var obj = JSON.parse(result);
-				var contents = obj[0]["Contents"];
+				var content = obj[0]["Content"];
 				var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 				var gainNode = audioCtx.createGain();
-				for(var i = 0; i < contents.length; i++) {
-					if (contents[i]["Type"] == "Note") {
+				for(var i = 0; i < content.length; i++) {
+					if (content[i]["Type"] == "Note") {
 						var oscillator = audioCtx.createOscillator();
 						oscillator.type = 'sine';
-						oscillator.frequency.value = 440 * Math.pow(2, (contents[i]["Pitch"] - 9)/12);
-						oscillator.start(contents[i]["StartTime"]);
-						oscillator.stop(contents[i]["StartTime"] + contents[i]["Duration"]);
+						oscillator.frequency.value = 440 * Math.pow(2, (content[i]["Pitch"] - 9)/12);
+						oscillator.start(content[i]["StartTime"]);
+						oscillator.stop(content[i]["StartTime"] + content[i]["Duration"]);
 						oscillator.connect(gainNode);
 					}
 				}

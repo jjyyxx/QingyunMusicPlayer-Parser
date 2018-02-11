@@ -7,16 +7,16 @@ module.exports = {
         const pow = Math.pow(2, -expr)
         const num = t.Meta.Duration / pow
         const result = []
-        const length = t.Contents.length
+        const length = t.Content.length
         for (let i = 0; i < num; i++) {
             const startTime = i * pow
             for (let j = 0; j < length; j++) {
-                result.push({ ...(t.Contents[j]), StartTime: startTime, Duration: pow })
+                result.push({ ...(t.Content[j]), StartTime: startTime, Duration: pow })
             }
         }
 
         return {
-            Contents: result,
+            Content: result,
             Meta: t.Meta
         }
     },
@@ -25,18 +25,18 @@ module.exports = {
         const ts = [new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack(), new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()]
         const pow = Math.pow(2, -expr)
         const num = ts[1].Meta.Duration / pow
-        const lengths = ts.map((t) => t.Contents.length)
+        const lengths = ts.map((t) => t.Content.length)
         const result = []
         for (let i = 0; i < num; i++) {
             const startTime = i * pow
             const index = i % 2
             for (let j = 0; j < lengths[index]; j++) {
-                result.push({ ...(ts[index].Contents[j]), StartTime: startTime, Duration: pow })
+                result.push({ ...(ts[index].Content[j]), StartTime: startTime, Duration: pow })
             }
         }
 
         return {
-            Contents: result,
+            Content: result,
             Meta: {
                 Duration: ts[1].Meta.Duration,
                 Incomplete: ts[1].Meta.Incomplete,
@@ -51,7 +51,7 @@ module.exports = {
     Tuplet(expr, subtrack) {
         const scale = Math.pow(2, Math.floor(Math.log2(expr))) / expr
         const t = new SubtrackParser(subtrack, this.Settings, this.Libraries).parseTrack()
-        t.Contents.forEach((note) => {
+        t.Content.forEach((note) => {
             note.Duration *= scale
             note.StartTime *= scale
         })
@@ -63,8 +63,8 @@ module.exports = {
         const t1 = new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack()
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
 
-        const pitch1 = t1.Contents[0].Pitch
-        const pitch2 = t2.Contents[0].Pitch
+        const pitch1 = t1.Content[0].Pitch
+        const pitch2 = t2.Content[0].Pitch
         const duration = t1.Meta.Duration
         const port = this.Settings.Port
         const num = duration * port
@@ -78,14 +78,14 @@ module.exports = {
             return {
                 Type: 'Note',
                 Pitch: pitch,
-                Volume: t2.Contents[0].Volume,
+                Volume: t2.Content[0].Volume,
                 Duration: 1 / port,
                 StartTime: index / port
             }
         })
 
         return {
-            Contents: result,
+            Content: result,
             Meta: {
                 Duration: duration,
                 Incomplete: [duration],
@@ -100,24 +100,24 @@ module.exports = {
     GraceNote(subtrack1, subtrack2) {
         const t1 = new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack()
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
-        const num = subtrack1.Contents.length
+        const num = subtrack1.Content.length
         let dur
         if (num <= 4) {
             dur = this.Settings.Appo / 4
         } else {
             dur = this.Settings.Appo / num
         }
-        t1.Contents.forEach((note) => {
+        t1.Content.forEach((note) => {
             note.Duration = dur
             note.StartTime *= dur
         })
         const total = dur * num
-        t2.Contents.forEach((note) => {
+        t2.Content.forEach((note) => {
             note.StartTime += total
             note.Duration -= total
         })
         return {
-            Contents: [...t1.Contents, ...t2.Contents],
+            Content: [...t1.Content, ...t2.Content],
             Meta: t2.Meta
         }
     },
@@ -125,7 +125,7 @@ module.exports = {
     Appoggiatura(subtrack1, subtrack2) {
         const t1 = new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack()
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
-        const num = subtrack2.Contents.length
+        const num = subtrack2.Content.length
         let dur
         if (num <= 4) {
             dur = this.Settings.Appo / 4
@@ -134,17 +134,17 @@ module.exports = {
         }
 
         const total = dur * num
-        t1.Contents.forEach((note) => {
+        t1.Content.forEach((note) => {
             note.Duration -= total
         })
-        t2.Contents.forEach((note) => {
+        t2.Content.forEach((note) => {
             note.Duration = dur
             note.StartTime *= dur
-            note.StartTime += t1.Contents[0].Duration
+            note.StartTime += t1.Content[0].Duration
         })
 
         return {
-            Contents: [...t1.Contents, ...t2.Contents],
+            Content: [...t1.Content, ...t2.Content],
             Meta: t1.Meta
         }
     },
