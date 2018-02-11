@@ -113,7 +113,10 @@ class Parser {
 
         return {
             ID: section.ID,
-            Tracks: [].concat(...section.Tracks.map((track) => new TrackParser(track, this.sectionContext.Settings.extend(), this.libraries).parseTrack()))
+            Tracks: [].concat(...section.Tracks.map((track, index) => {
+                track.Index = index
+                return new TrackParser(track, this.sectionContext.Settings.extend(), this.libraries).parseTrack()
+            }))
         }
     }
 }
