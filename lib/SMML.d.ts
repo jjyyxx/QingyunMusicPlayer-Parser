@@ -102,6 +102,7 @@ declare namespace SMML {
             Warnings: Error[],
             PitchQueue: number[][]
         },
+        Instrument: string
         Contents: ParsedNote[]
     }
 
@@ -120,5 +121,15 @@ declare namespace SMML {
         PitchOperators: string
         ChordNotations: string
         ChordOperators: string
+    }
+
+    interface ParsedSection {
+        ID: string
+        Tracks: ParsedTrack[]
+    }
+
+    interface Adapter {
+        new (parsedSection: ParsedSection)
+        adapt(): any
     }
 }

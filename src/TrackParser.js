@@ -55,12 +55,23 @@ class TrackParser {
      * @returns {SMML.ParsedTrack[]}
      */
     parseTrack() {
-        const result = []
         this.preprocess()
         const trackResult = this.parseTrackContent(this.Contents)
         TrackParser.processPedal(trackResult)
-        result.push(trackResult)
-        return result
+        if (this.isSubtrack) {
+            return [trackResult]
+        } else {
+            return this.Instruments.map((instrument) => {
+                return {
+                    Instrument: instrument.Instrument,
+                    Meta: trackResult.Meta,
+                    Contents: trackResult.Contents.map((note) => ({
+                        ...note,
+                        Volume: note.Volume * instrument.Proportion
+                    }))
+                }
+            })
+        }
     }
 
     preprocess() {

@@ -1,13 +1,14 @@
 const Loader = require('./LibLoader')
 const GlobalSetting = require('./GlobalSetting')
-const TrackParser = require('./TrackParser')
+const { TrackParser } = require('./TrackParser')
 
 class Parser {
     /**
      * Parser
      * @param {SMML.TokenizedData} tokenizedData
+     * @param {SMML.Adapter} adapter
      */
-    constructor(tokenizedData) {
+    constructor(tokenizedData, adapter = undefined) {
         this.tokenizedData = tokenizedData
         this.libraries = new Loader(this.tokenizedData.Library).load()
         this.result = {
@@ -17,6 +18,7 @@ class Parser {
             Settings: new GlobalSetting()
         }
         this.order = []
+        this.adapter = adapter
     }
 
     parse() {
@@ -26,7 +28,11 @@ class Parser {
             result.push(this.parseSection(this.tokenizedData.Sections[index]))
         })
         this.result = result
-        return result
+        if (this.adapter === undefined) {
+            return result
+        } else {
+            return new this.adapter(result).adapt()
+        }
     }
 
     generateOrder() {
