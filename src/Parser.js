@@ -110,12 +110,21 @@ class Parser {
     parseSection(section) {
         section.Settings.filter((token) => token.Type === 'FUNCTION')
             .forEach((token) => this.libraries.FunctionPackage.applyFunction({ Settings: this.sectionContext.Settings }, token))
-
+        const instrStatistic = {}
         return {
             ID: section.ID,
-            Tracks: [].concat(...section.Tracks.map((track, index) => {
-                track.Index = index
-                return new TrackParser(track, this.sectionContext.Settings.extend(), this.libraries).parseTrack()
+            Tracks: [].concat(...section.Tracks.map((track) => {
+                const tempTracks = new TrackParser(track, this.sectionContext.Settings.extend(), this.libraries).parseTrack()
+                for (const tempTrack of tempTracks) {
+                    if (tempTrack.Instrument in instrStatistic) {
+                        instrStatistic[tempTrack.Instrument] += 1
+                    } else {
+                        instrStatistic[tempTrack.Instrument] = 1
+                    }
+                    if (track.ID === '') {
+                        tempTrack.ID += '#' + instrStatistic[tempTrack.Instrument].toString()
+                    }
+                }
             }))
         }
     }

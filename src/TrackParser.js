@@ -38,7 +38,6 @@ class TrackParser {
     constructor(track, sectionSettings, libraries, isSubtrack = false) {
         this.isSubtrack = isSubtrack
         this.ID = track.ID
-        this.Index = track.Index    // probably bad design
         this.Instruments = track.Instruments
         this.Libraries = libraries
         this.Content = track.Content
@@ -65,7 +64,7 @@ class TrackParser {
             return this.Instruments.map((instrument) => {
                 return {
                     Instrument: instrument.Instrument,
-                    ID: this.ID ? `${this.ID}#${instrument.Instrument}` : `${instrument.Instrument}#${this.Index}`,
+                    ID: this.ID ? `${this.ID}#${instrument.Instrument}` : instrument.Instrument,
                     Meta: trackResult.Meta,
                     Content: trackResult.Content.map((note) => ({
                         ...note,
