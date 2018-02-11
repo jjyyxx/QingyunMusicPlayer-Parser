@@ -36,35 +36,7 @@ function AssignSetting(globalSetting, key, value, criterion) {
     globalSetting[key] = value
 }
 
-const Tonality = {
-    'C': 0,
-    'G': 7,
-    'D': 2,
-    'A': 9,
-    'E': 4,
-    'B': -1,
-    '#F': 6,
-    '#C': 1,
-    'F': 5,
-    'bB': -2,
-    'bE': 3,
-    'bA': 8,
-    'bD': 1,
-    'bG': 6,
-    'bC': -1,
-
-    'F#': 6,
-    'C#': 1,
-    'Bb': -2,
-    'Eb': 3,
-    'Ab': 8,
-    'Db': 1,
-    'Gb': 6,
-    'Cb': -1,
-}
-
 module.exports = {
     FixedLengthQueue,
-    AssignSetting,
-    Tonality
+    AssignSetting
 }

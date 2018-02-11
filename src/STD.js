@@ -1,5 +1,5 @@
 const { SubtrackParser } = require('./TrackParser')
-const { AssignSetting, Tonality } = require('./Util')
+const { AssignSetting } = require('./Util')
 
 module.exports = {
     Tremolo1(expr, subtrack) {
@@ -165,7 +165,46 @@ module.exports = {
     Oct(oct) {
         AssignSetting(this.Settings, 'Octave', oct, (octave) => Number.isInteger(octave))
     },
-    KeyOct(key, oct) {
+    KeyOct(keyOct) {
+        let key, oct, splitIndex
+        if (keyOct.endsWith('\'')) {
+            splitIndex = keyOct.indexOf('\'')
+            key = keyOct.slice(0, splitIndex)
+            oct = keyOct.length - splitIndex + 1
+        } else if (keyOct.endsWith(',')) {
+            splitIndex = keyOct.indexOf('\'')
+            key = keyOct.slice(0, splitIndex)
+            oct = keyOct.length - splitIndex + 1
+        } else {
+            key = keyOct
+            oct = 0
+        }
+        const Tonality = {
+            'C': 0,
+            'G': 7,
+            'D': 2,
+            'A': 9,
+            'E': 4,
+            'B': -1,
+            '#F': 6,
+            '#C': 1,
+            'F': 5,
+            'bB': -2,
+            'bE': 3,
+            'bA': 8,
+            'bD': 1,
+            'bG': 6,
+            'bC': -1,
+
+            'F#': 6,
+            'C#': 1,
+            'Bb': -2,
+            'Eb': 3,
+            'Ab': 8,
+            'Db': 1,
+            'Gb': 6,
+            'Cb': -1,
+        }
         AssignSetting(this.Settings, 'Key', Tonality[key], (key) => Number.isInteger(key))
         AssignSetting(this.Settings, 'Octave', oct, (octave) => Number.isInteger(octave))
     },
