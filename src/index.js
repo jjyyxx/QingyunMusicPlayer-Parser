@@ -6,6 +6,7 @@ const process = require('process')
 const path = require('path')
 const input = process.argv[2]
 if (!input) {
+    // eslint-disable-next-line no-console
     console.log('Usage: node index.js <input_path> [output_path]')    
     process.exit(0)
 }
@@ -25,5 +26,4 @@ fs.readFile(path.join(path.resolve('./'), input), 'utf8', (err, data) => {
     const trackParser = new TrackParser(track, new GlobalSetting(), new LibLoader().load())
     const json = JSON.stringify(trackParser.parseTrack())
     fs.writeFile(path.join(path.resolve('./'), output), json, 'utf8', () => {})
-    console.log(json)
 })

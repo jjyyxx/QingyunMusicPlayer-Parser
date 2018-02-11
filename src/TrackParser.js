@@ -7,6 +7,7 @@ class TrackParser {
         const contents = trackResult.Contents
         let press
         let release
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             press = contents.findIndex((tok) => tok.Type === 'PedalPress')
             release = contents.findIndex((tok) => tok.Type === 'PedalRelease')
