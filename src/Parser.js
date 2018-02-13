@@ -40,7 +40,7 @@ class Parser {
             const vol = section.Settings.find((setting) => setting.Type === 'Volta')
             let volta
             if (vol) {
-                volta = vol.Index
+                volta = vol.Order
             } else {
                 volta = undefined
             }
