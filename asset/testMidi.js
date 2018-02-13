@@ -143,6 +143,7 @@ function audioLib(instr_No) {
 
 function play() {
     var file = document.getElementById('file').files[0]
+    window.fonts = window.fonts || {}
     var reader = new FileReader()
     reader.readAsText(file)
     reader.onload = function (event) {
@@ -150,8 +151,9 @@ function play() {
         var tracks = JSON.parse(result)
         var audioCtx = new (window.AudioContext || window.webkitAudioContext)()
         var player = new window.WebAudioFontPlayer()
-        Promise.all(tracks.map((track) => player.loader.load(audioCtx, 'https://jjyyxx.github.io/webaudiofontdata/data/' + audioLib(instrDict[track['Instrument']]) + '.json', '_tone_' + audioLib(instrDict[track['Instrument']])))).then(
-            (fonts) => {
+        const instrNames = tracks.map((track) => audioLib(instrDict[track['Instrument']]))
+        Promise.all(instrNames.map((instr) => player.loader.load(audioCtx, 'https://jjyyxx.github.io/webaudiofontdata/data/' + instr + '.json', '_tone_' + instr))).then(
+            (instrs) => {
                 var initialTime = audioCtx.currentTime
                 for (var i = 0, length = tracks.length; i < length; i++) {
                     var contents = tracks[i]['Contents']
@@ -160,7 +162,7 @@ function play() {
                             player.queueWaveTable(
                                 audioCtx,
                                 audioCtx.destination,
-                                fonts[i],
+                                window.fonts[instrs[i]],
                                 contents[j]['StartTime'] + initialTime,
                                 contents[j]['Pitch'] + 60,
                                 contents[j]['Duration'],
