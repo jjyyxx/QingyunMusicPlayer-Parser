@@ -13,8 +13,8 @@ class GlobalSetting {
         Trace = 1,
         Duration = 0,
         Oct = 0,
-        FadeIn = 2,
-        FadeOut = 2,
+        FadeIn = 0,
+        FadeOut = 0,
         Rev = 0,
         ConOct = 0,
         ConOctVolume = 1

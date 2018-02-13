@@ -125,6 +125,7 @@ class Parser {
                         tempTrack.ID += '#' + instrStatistic[tempTrack.Instrument].toString()
                     }
                 }
+                return tempTracks
             }))
         }
     }

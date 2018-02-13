@@ -149,7 +149,7 @@ class TrackParser {
         if (!this.isSubtrack && !((localContext.leftIncomplete === this.Settings.Bar && localContext.rightIncomplete === this.Settings.Bar) || (localContext.leftIncomplete + localContext.rightIncomplete === this.Settings.Bar))) {
             this.Context.warnings.push(new Error('Not enough'))
         }
-        return {
+        const returnObj = {
             Content: result,
             Meta: {
                 Warnings: this.Context.warnings,
@@ -162,6 +162,17 @@ class TrackParser {
                 NotesBeforeTie: this.Context.notesBeforeTie
             }
         }
+        if (!this.isSubtrack) {
+            returnObj.Meta.toJSON = function toJson() {
+                return {
+                    FadeIn: this.FadeIn,
+                    FadeOut: this.FadeOut,
+                    Duration: this.Duration,
+                    Warnings: this.Warnings
+                }
+            }
+        }
+        return returnObj
     }
 
     isLegalBar (bar) {
@@ -230,7 +241,7 @@ class TrackParser {
     parseNote(note) {
         const pitches = []
         const duration = this.parseDuration(note)
-        const actualDuration = duration * this.Settings.Stac[note.Staccato]
+        const actualDuration = duration * (1 - this.Settings.Stac[note.Staccato])
         const volumeScale = note.VolumeOperators.split('').reduce((sum, cur) => sum * cur === '>' ? this.Settings.Accent : cur === ':' ? this.Settings.Light : 1, 1)
         const volume = this.Settings.Volume * volumeScale
 
@@ -380,7 +391,7 @@ class TrackParser {
                 break
             }
         }
-        return duration
+        return duration * Math.pow(2, -this.Settings.Duration)
     }
 }
 TrackParser.pitchDict = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 }

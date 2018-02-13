@@ -1,4 +1,4 @@
-const { readFileSync, existsSync } = require('fs')  // TODO: consider async version
+const { AssignSetting } = require('./Util')
 
 class LibLoader {
     /**
@@ -9,7 +9,7 @@ class LibLoader {
         this.internalLib = []
         this.externalLib = []
         for (const lib of libs) {
-            if (lib.Type === 'Internal') {
+            if (lib.Storage === 'Internal') {
                 this.internalLib.push(lib)
             } else {
                 this.externalLib.push(lib)
@@ -17,12 +17,11 @@ class LibLoader {
         }
 
         this.result = {
-            ChordNotations: {},
-            ChordOperators: {},
+            ChordNotation: {},
+            ChordOperator: {},
             MetaInformation: {},
             FunctionPackage: {},
             MIDIEventList: {},
-            Library: {}
         }
         if (withDefault) {
             Object.assign(this.result, LibLoader.Default)
@@ -44,6 +43,7 @@ class LibLoader {
      * @param {SMML.InternalLibrary} lib 
      */
     loadInternalLibrary(lib) {
+        let code
         switch (lib.Type) {
         case LibLoader.libType.ChordNotation:
             lib.Data.forEach((notation) => {
@@ -58,11 +58,13 @@ class LibLoader {
         case LibLoader.libType.MetaInformation:
             break
         case LibLoader.libType.FunctionPackage:
+            code = 'this.result.FunctionPackage.STD = {' + lib.Data.map((func) => func.Code).join(',') + '}'
+            eval(code)
             break
         case LibLoader.libType.MIDIEventList:
             break
         case LibLoader.libType.Library:
-            Object.assign(this.result, new LibLoader(lib.Data, false).load())
+        // Object.assign(this.result, new LibLoader(lib.Data, false).load())
         }
     }
 
@@ -71,39 +73,64 @@ class LibLoader {
      * @param {SMML.ExternalLibrary} lib
      */
     loadExternalLibrary(lib) {
-        if (existsSync(lib.Path)) {
-            const content = readFileSync(lib.Path, 'utf8')
-            switch (lib.Type) {
-            case LibLoader.libType.ChordNotation:
-                JSON.parse(content).forEach((notation) => {
-                    this.result.ChordNotation[notation.Notation] = notation.Pitches
-                })
-                break
-            case LibLoader.libType.ChordOperator:
-                JSON.parse(content).forEach((operator) => {
-                    this.result.ChordOperator[operator.Notation] = operator.Pitches
-                })
-                break
-            case LibLoader.libType.MetaInformation:
-                break
-            case LibLoader.libType.FunctionPackage:
-                break
-            case LibLoader.libType.MIDIEventList:
-                break
-            case LibLoader.libType.Library:
-                Object.assign(this.result, new LibLoader(JSON.parse(content), false).load())
-            }
+        switch (lib.Type) {
+        case LibLoader.libType.ChordNotation:
+            // JSON.parse(content).forEach((notation) => {
+            //     this.result.ChordNotation[notation.Notation] = notation.Pitches
+            // })
+            break
+        case LibLoader.libType.ChordOperator:
+            // JSON.parse(content).forEach((operator) => {
+            //     this.result.ChordOperator[operator.Notation] = operator.Pitches
+            // })
+            break
+        case LibLoader.libType.MetaInformation:
+            break
+        case LibLoader.libType.FunctionPackage:
+            break
+        case LibLoader.libType.MIDIEventList:
+            break
+        case LibLoader.libType.Library:
+            this.loadSubPackage(lib.Content)
+        }
+    }
+
+    /**
+     * 
+     * @param {SMML.Library[]} content 
+     */
+    loadSubPackage(content) {
+        const sub = new LibLoader(content, false).load()
+        this.result.ChordNotation = {
+            ...this.result.ChordNotation,
+            ...sub.ChordNotation
+        }
+        this.result.ChordOperator = {
+            ...this.result.ChordOperator,
+            ...sub.ChordOperator
+        }
+        // this.result.FunctionPackage = {
+        //     ...this.result.FunctionPackage,
+        //     ...sub.FunctionPackage
+        // }
+        this.result.MetaInformation = {
+            ...this.result.MetaInformation,
+            ...sub.MetaInformation
+        }
+        this.result.MIDIEventList = {
+            ...this.result.MIDIEventList,
+            ...sub.MIDIEventList
         }
     }
 }
 
 LibLoader.libType = {
-    ChordNotation: 'ChordNotations',
-    ChordOperator: 'ChordOperators',
+    ChordNotation: 'ChordNotation',
+    ChordOperator: 'ChordOperator',
     MetaInformation: 'MetaInformation',
-    FunctionPackage: 'FunctionPackage',
+    FunctionPackage: 'Function',
     MIDIEventList: 'MIDIEventList',
-    Library: 'Library'
+    Library: 'Package'
 }
 
 LibLoader.Default = {

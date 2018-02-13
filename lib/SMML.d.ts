@@ -19,7 +19,7 @@ declare namespace SMML {
 
     interface ExternalLibrary extends Library{
         Storage: "External"
-        Path: string
+        Content: Library[]
     }
 
     interface Track {
