@@ -149,7 +149,17 @@ module.exports = {
         }
     },
 
-    ConOct(octave, volumeScale = 1) {
+    Fermata(subtrack) {
+        const t = new SubtrackParser(subtrack, this.Settings, this.Libraries).parseTrack()
+        t.Content.forEach((note) => {
+            note.Duration *= this.Settings.Ferm
+            note.StartTime *= this.Settings.Ferm
+        })
+        t.Meta.Duration *= this.Settings.Ferm
+        return t
+    },
+
+    ConOct(octave = 0, volumeScale = 1) {
         AssignSetting(this.Settings, 'ConOct', octave, (octave) => Number.isInteger(octave))
         AssignSetting(this.Settings, 'ConOctVolume', volumeScale, (volume) => volume >= 0)
     },
@@ -244,6 +254,9 @@ module.exports = {
     },
     Rev(r) {
         AssignSetting(this.Settings, 'Rev', r, () => true)
+    },
+    Ferm(ferm) {
+        AssignSetting(this.Settings, 'Ferm', ferm, (ferm) => ferm > 1)
     },
     setVar(key, value) {
         this.Settings.Var[key] = value

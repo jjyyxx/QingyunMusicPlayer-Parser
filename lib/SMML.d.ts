@@ -81,6 +81,9 @@ declare namespace SMML {
         FadeIn: number
         FadeOut: number
         Rev: number
+        ConOct: number
+        ConOctVolume: number
+        Ferm: number
         Var: any[]
     }
 

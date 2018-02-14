@@ -1,4 +1,5 @@
 const { AssignSetting } = require('./Util')
+const { SubtrackParser } = require('./TrackParser')
 
 class LibLoader {
     /**
@@ -20,7 +21,9 @@ class LibLoader {
             ChordNotation: {},
             ChordOperator: {},
             MetaInformation: {},
-            FunctionPackage: {},
+            FunctionPackage: {
+                Custom: {}
+            },
             MIDIEventList: {},
         }
         if (withDefault) {
@@ -58,7 +61,7 @@ class LibLoader {
         case LibLoader.libType.MetaInformation:
             break
         case LibLoader.libType.FunctionPackage:
-            code = 'this.result.FunctionPackage.STD = {' + lib.Data.map((func) => func.Code).join(',') + '}'
+            code = 'this.result.FunctionPackage.Custom = {' + lib.Data.map((func) => func.Code).join(',') + '}'
             eval(code)
             break
         case LibLoader.libType.MIDIEventList:
@@ -109,10 +112,10 @@ class LibLoader {
             ...this.result.ChordOperator,
             ...sub.ChordOperator
         }
-        // this.result.FunctionPackage = {
-        //     ...this.result.FunctionPackage,
-        //     ...sub.FunctionPackage
-        // }
+        this.result.FunctionPackage.Custom = {
+            ...this.result.FunctionPackage.Custom,
+            ...sub.FunctionPackage.Custom
+        }
         this.result.MetaInformation = {
             ...this.result.MetaInformation,
             ...sub.MetaInformation
@@ -150,17 +153,28 @@ LibLoader.Default = {
     MetaInformation: {},
     FunctionPackage: {
         STD: require('./STD'),
+        Custom: {},
         applyFunction(parser, token) {
-            return this.STD[token.Name].apply(parser, token.Argument.map((arg) => {
+            return this.locateFunction(token.Name).apply({
+                Settings: parser.Settings,
+                Libraries: parser.Libraries
+            }, token.Argument.map((arg) => {
                 switch (arg.Type) {
+                case 'Read':
+                    return Number(arg.Content)
                 case 'String':
                     return arg.Content
                 case 'Expression':
-                    return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // potentially vulnerable
+                    return eval(arg.Content.replace(/log2/g, 'Math.log2'))
                 default:
                     return arg
                 }
             }))
+        },
+        locateFunction (name) {
+            if (name in this.STD) return this.STD[name]
+            if (name in this.Custom) return this.Custom[name]   // can be changed to employ package mechanism
+            return () => {}
         }
     },
     MIDIEventList: {},

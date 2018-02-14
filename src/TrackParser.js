@@ -266,7 +266,6 @@ class TrackParser {
                 }
             }
         }
-
         if (note.Arpeggio) {
             const appo = []
             const length = pitches.length
@@ -294,6 +293,11 @@ class TrackParser {
             }])
         }
 
+        const volumes = [].fill(volume, 0, pitches.length)
+        if (this.Settings.ConOct !== 0) {
+            pitches.push(...pitches.map((pitch) => pitch + 12 * this.Settings.ConOct))
+            volumes.push(...volumes.map((volume) => volume * this.Settings.ConOctVolume))
+        }
         this.Context.pitchQueue.push(pitches.slice(0))
 
         // merge pitches with previous ones if tie exists
@@ -302,17 +306,19 @@ class TrackParser {
             this.Context.notesBeforeTie.forEach((prevNote) => {
                 const index = pitches.indexOf(prevNote.Pitch)
                 if (index === -1) return
+                if (prevNote.Volume !== volume[index]) return
                 prevNote.Duration += duration
                 pitches.splice(index, 1)
+                volumes.splice(index, 1)
             })
         }
 
         const result = []
-        for (const pitch of pitches) {
+        for (var index = 0, length = pitches.length; index < length; index++) {
             result.push({
                 Type: 'Note',
-                Pitch: pitch,
-                Volume: volume, 
+                Pitch: pitches[index],
+                Volume: volumes[index], 
                 Duration: actualDuration,
                 StartTime: this.Context.startTime
             })
