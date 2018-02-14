@@ -402,12 +402,6 @@ class TrackParser {
 }
 TrackParser.pitchDict = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 }
 TrackParser.pitchOperatorDict = { '#': 1, 'b': -1, '\'': 12, ',': -12 }
-// TrackParser.trackRepeatType = {
-//     None: 0,
-//     Positive: 1,
-//     Negative: -1
-// }
-
 
 class SubtrackParser extends TrackParser {
     constructor (track, sectionSettings, libraries) {
@@ -453,7 +447,6 @@ class SubtrackParser extends TrackParser {
         }
     }
 }
-
 
 module.exports = {
     TrackParser,

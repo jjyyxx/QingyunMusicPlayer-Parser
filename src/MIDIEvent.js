@@ -100,51 +100,53 @@ class MIDISysExEvent extends MIDIEvent {
     }
 }
 
-export class MIDIEventFactory {
-    static midiSubType = {
-        noteOff: 0x8,
-        noteOn: 0x9,
-        noteAftertouch: 0xA,
-        controlChange: 0xB,
-        programChange: 0xC,
-        channelAftertouch: 0xD,
-        pitchBend: 0xE
-    }
-
-    static metaSubType = {
-        sequenceNumber: 0x00,
-        text: 0x01,
-        copyrightNotice: 0x02,
-        trackName: 0x03,
-        instrumentName: 0x04,
-        lyrics: 0x05,
-        marker: 0x06,
-        cuePoint: 0x07,
-        midiChannelPrefix: 0x20,
-        endOfTrack: 0x2F,
-        setTempo: 0x51,
-        smpteOffset: 0x54,
-        timeSignature: 0x58,
-        keySignature: 0x59,
-        sequencerSpecific: 0x7F
-    }
-
-    static sysExSubType = {
-        normal: [0xF0, 0xF7],
-        initial: [0xF0, null],
-        upcoming: [0xF7, null],
-        ending: [0xF7, 0xF7]
-    }
-
+class MIDIEventFactory {
     static createMIDIChannelEvent(deltaTime, subType, channel, param1, param2) {
         return new MIDIChannelEvent(deltaTime, subType, channel, param1, param2)
     }
 
     static createMetaEvent(deltaTime, subType, uArray) {
-        return new MIDIEvent(deltaTime, subType, uArray)
+        return new MIDIMetaEvent(deltaTime, subType, uArray)
     }
 
     static createSysExEvent(deltaTime, subType, uArray) {
-        return new MIDIEvent(deltaTime, subType, uArray)
+        return new MIDISysExEvent(deltaTime, subType, uArray)
     }
 }
+
+MIDIEventFactory.midiSubType = {
+    noteOff: 0x8,
+    noteOn: 0x9,
+    noteAftertouch: 0xA,
+    controlChange: 0xB,
+    programChange: 0xC,
+    channelAftertouch: 0xD,
+    pitchBend: 0xE
+}
+
+MIDIEventFactory.metaSubType = {
+    sequenceNumber: 0x00,
+    text: 0x01,
+    copyrightNotice: 0x02,
+    trackName: 0x03,
+    instrumentName: 0x04,
+    lyrics: 0x05,
+    marker: 0x06,
+    cuePoint: 0x07,
+    midiChannelPrefix: 0x20,
+    endOfTrack: 0x2F,
+    setTempo: 0x51,
+    smpteOffset: 0x54,
+    timeSignature: 0x58,
+    keySignature: 0x59,
+    sequencerSpecific: 0x7F
+}
+
+MIDIEventFactory.sysExSubType = {
+    normal: [0xF0, 0xF7],
+    initial: [0xF0, null],
+    upcoming: [0xF7, null],
+    ending: [0xF7, 0xF7]
+}
+
+module.exports = MIDIEventFactory
