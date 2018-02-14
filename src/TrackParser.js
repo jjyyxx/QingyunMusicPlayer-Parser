@@ -3,7 +3,7 @@ class TrackParser {
      * 
      * @param {SMML.ParsedTrack} trackResult 
      */
-    static processPedal (trackResult) {
+    static processPedal(trackResult) {
         const content = trackResult.Content
         let press
         let release
@@ -66,10 +66,7 @@ class TrackParser {
                     Instrument: instrument.Instrument,
                     ID: this.ID ? `${this.ID}#${instrument.Instrument}` : instrument.Instrument,
                     Meta: trackResult.Meta,
-                    Content: trackResult.Content.map((note) => ({
-                        ...note,
-                        Volume: note.Volume * instrument.Proportion
-                    }))
+                    Content: trackResult.Content.map((note) => Object.assign({}, note, { Volume: note.Volume * instrument.Proportion }))
                 }
             })
         }
@@ -145,7 +142,7 @@ class TrackParser {
                 break
             }
         }
-        
+
         if (!this.isSubtrack && !((localContext.leftIncomplete === this.Settings.Bar && localContext.rightIncomplete === this.Settings.Bar) || (localContext.leftIncomplete + localContext.rightIncomplete === this.Settings.Bar))) {
             this.Context.warnings.push(new Error('Not enough'))
         }
@@ -175,11 +172,11 @@ class TrackParser {
         return returnObj
     }
 
-    isLegalBar (bar) {
+    isLegalBar(bar) {
         return bar === undefined || bar === this.Settings.Bar || bar === 0
     }
 
-    handleSubtrack (subtrack, localContext) {
+    handleSubtrack(subtrack, localContext) {
         if (subtrack === undefined) {
             localContext.subtrackTemp = {
                 Content: []
@@ -214,7 +211,7 @@ class TrackParser {
         }
     }
 
-    handleNote (note, localContext) {
+    handleNote(note, localContext) {
         const noteDuration = this.parseDuration(note)
         if (localContext.leftFirst) {
             localContext.leftIncomplete += noteDuration
@@ -223,7 +220,7 @@ class TrackParser {
         }
     }
 
-    handleBarLine (barLine, localContext) {
+    handleBarLine(barLine, localContext) {
         localContext.leftFirst = false
         if (barLine.Terminal !== true) {
             if (!this.isLegalBar(localContext.rightIncomplete)) {
@@ -270,12 +267,11 @@ class TrackParser {
             const appo = []
             const length = pitches.length
             for (let i = 1; i < length; i++) {
-                appo.push({
-                    ...note,
-                    Pitches: pitches.slice(0, i).map((pitch) => ({Pitch: pitch})),
+                appo.push(Object.assign({}, note, {
+                    Pitches: pitches.slice(0, i).map((pitch) => ({ Pitch: pitch })),
                     Arpeggio: false,
                     PitchOperators: ''
-                })
+                }))
             }
             return this.Libraries.FunctionPackage.STD.GraceNote.apply(this, [{
                 Type: 'Subtrack',
@@ -284,12 +280,11 @@ class TrackParser {
             }, {
                 Type: 'Subtrack',
                 Repeat: -1,
-                Content: [{
-                    ...note,
-                    Pitches: pitches.map((pitch) => ({Pitch: pitch})),
+                Content: [Object.assign({}, note, {
+                    Pitches: pitches.map((pitch) => ({ Pitch: pitch })),
                     Arpeggio: false,
                     PitchOperators: ''
-                }]
+                })]
             }])
         }
 
@@ -318,7 +313,7 @@ class TrackParser {
             result.push({
                 Type: 'Note',
                 Pitch: pitches[index],
-                Volume: volumes[index], 
+                Volume: volumes[index],
                 Duration: actualDuration,
                 StartTime: this.Context.startTime
             })
@@ -332,7 +327,7 @@ class TrackParser {
     * @param {SMML.Pitch} pitch
     * @returns {number[]}
     */
-    parseChord (pitch) {
+    parseChord(pitch) {
         const pitches = this.Libraries.ChordNotation[pitch.ChordNotations]
         if (pitch.ChordOperators === '') return pitches
         const operators = this.Libraries.ChordOperator[pitch.ChordOperators]
@@ -408,7 +403,7 @@ TrackParser.pitchDict = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 }
 TrackParser.pitchOperatorDict = { '#': 1, 'b': -1, '\'': 12, ',': -12 }
 
 class SubtrackParser extends TrackParser {
-    constructor (track, sectionSettings, libraries) {
+    constructor(track, sectionSettings, libraries) {
         super(track, sectionSettings, libraries, true)
         this.Repeat = track.Repeat
     }
@@ -430,7 +425,7 @@ class SubtrackParser extends TrackParser {
                             temp.push(token)
                         }
                     } else if (token.Order.indexOf(i) === -1) {
-                        skip = true                
+                        skip = true
                     } else {
                         skip = false
                         temp.push(token)

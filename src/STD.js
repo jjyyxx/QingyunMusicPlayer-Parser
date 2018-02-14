@@ -11,7 +11,7 @@ module.exports = {
         for (let i = 0; i < num; i++) {
             const startTime = i * pow
             for (let j = 0; j < length; j++) {
-                result.push({ ...(t.Content[j]), StartTime: startTime, Duration: pow })
+                result.push(Object.assign({}, t.Content[j]), { StartTime: startTime, Duration: pow })
             }
         }
 
@@ -31,7 +31,7 @@ module.exports = {
             const startTime = i * pow
             const index = i % 2
             for (let j = 0; j < lengths[index]; j++) {
-                result.push({ ...(ts[index].Content[j]), StartTime: startTime, Duration: pow })
+                result.push(Object.assign({}, ts[index].Content[j], { StartTime: startTime, Duration: pow }))
             }
         }
         return {

@@ -106,26 +106,11 @@ class LibLoader {
      */
     loadSubPackage(content) {
         const sub = new LibLoader(content, false).load()
-        this.result.ChordNotation = {
-            ...this.result.ChordNotation,
-            ...sub.ChordNotation
-        }
-        this.result.ChordOperator = {
-            ...this.result.ChordOperator,
-            ...sub.ChordOperator
-        }
-        this.result.FunctionPackage.Custom = {
-            ...this.result.FunctionPackage.Custom,
-            ...sub.FunctionPackage.Custom
-        }
-        this.result.MetaInformation = {
-            ...this.result.MetaInformation,
-            ...sub.MetaInformation
-        }
-        this.result.MIDIEventList = {
-            ...this.result.MIDIEventList,
-            ...sub.MIDIEventList
-        }
+        Object.assign(this.result.ChordNotation, sub.ChordNotation)
+        Object.assign(this.result.ChordOperator, sub.ChordOperator)
+        Object.assign(this.result.FunctionPackage.Custom, sub.FunctionPackage.Custom)
+        Object.assign(this.result.MetaInformation, sub.MetaInformation)
+        Object.assign(this.result.MIDIEventList, sub.MIDIEventList)
     }
 }
 
