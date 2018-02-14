@@ -1,4 +1,5 @@
 const { SubtrackParser } = require('./TrackParser')
+const { AssignSetting } = require('./Util')
 
 module.exports = {
     Tremolo1(expr, subtrack) {
@@ -6,16 +7,16 @@ module.exports = {
         const pow = Math.pow(2, -expr)
         const num = t.Meta.Duration / pow
         const result = []
-        const length = t.Contents.length
+        const length = t.Content.length
         for (let i = 0; i < num; i++) {
             const startTime = i * pow
             for (let j = 0; j < length; j++) {
-                result.push({ ...(t.Contents[j]), StartTime: startTime, Duration: pow })
+                result.push({ ...(t.Content[j]), StartTime: startTime, Duration: pow })
             }
         }
 
         return {
-            Contents: result,
+            Content: result,
             Meta: t.Meta
         }
     },
@@ -24,18 +25,18 @@ module.exports = {
         const ts = [new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack(), new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()]
         const pow = Math.pow(2, -expr)
         const num = ts[1].Meta.Duration / pow
-        const lengths = ts.map((t) => t.Contents.length)
+        const lengths = ts.map((t) => t.Content.length)
         const result = []
         for (let i = 0; i < num; i++) {
             const startTime = i * pow
             const index = i % 2
             for (let j = 0; j < lengths[index]; j++) {
-                result.push({ ...(ts[index].Contents[j]), StartTime: startTime, Duration: pow })
+                result.push({ ...(ts[index].Content[j]), StartTime: startTime, Duration: pow })
             }
         }
 
         return {
-            Contents: result,
+            Content: result,
             Meta: {
                 Duration: ts[1].Meta.Duration,
                 Incomplete: ts[1].Meta.Incomplete,
@@ -50,7 +51,7 @@ module.exports = {
     Tuplet(expr, subtrack) {
         const scale = Math.pow(2, Math.floor(Math.log2(expr))) / expr
         const t = new SubtrackParser(subtrack, this.Settings, this.Libraries).parseTrack()
-        t.Contents.forEach((note) => {
+        t.Content.forEach((note) => {
             note.Duration *= scale
             note.StartTime *= scale
         })
@@ -62,8 +63,8 @@ module.exports = {
         const t1 = new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack()
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
 
-        const pitch1 = t1.Contents[0].Pitch
-        const pitch2 = t2.Contents[0].Pitch
+        const pitch1 = t1.Content[0].Pitch
+        const pitch2 = t2.Content[0].Pitch
         const duration = t1.Meta.Duration
         const port = this.Settings.Port
         const num = duration * port
@@ -77,14 +78,14 @@ module.exports = {
             return {
                 Type: 'Note',
                 Pitch: pitch,
-                Volume: t2.Contents[0].Volume,
+                Volume: t2.Content[0].Volume,
                 Duration: 1 / port,
                 StartTime: index / port
             }
         })
 
         return {
-            Contents: result,
+            Content: result,
             Meta: {
                 Duration: duration,
                 Incomplete: [duration],
@@ -99,24 +100,24 @@ module.exports = {
     GraceNote(subtrack1, subtrack2) {
         const t1 = new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack()
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
-        const num = subtrack1.Contents.length
+        const num = subtrack1.Content.length
         let dur
         if (num <= 4) {
             dur = this.Settings.Appo / 4
         } else {
             dur = this.Settings.Appo / num
         }
-        t1.Contents.forEach((note) => {
+        t1.Content.forEach((note) => {
             note.Duration = dur
             note.StartTime *= dur
         })
         const total = dur * num
-        t2.Contents.forEach((note) => {
+        t2.Content.forEach((note) => {
             note.StartTime += total
             note.Duration -= total
         })
         return {
-            Contents: [...t1.Contents, ...t2.Contents],
+            Content: [...t1.Content, ...t2.Content],
             Meta: t2.Meta
         }
     },
@@ -124,7 +125,7 @@ module.exports = {
     Appoggiatura(subtrack1, subtrack2) {
         const t1 = new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack()
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
-        const num = subtrack2.Contents.length
+        const num = subtrack2.Content.length
         let dur
         if (num <= 4) {
             dur = this.Settings.Appo / 4
@@ -133,73 +134,129 @@ module.exports = {
         }
 
         const total = dur * num
-        t1.Contents.forEach((note) => {
+        t1.Content.forEach((note) => {
             note.Duration -= total
         })
-        t2.Contents.forEach((note) => {
+        t2.Content.forEach((note) => {
             note.Duration = dur
             note.StartTime *= dur
-            note.StartTime += t1.Contents[0].Duration
+            note.StartTime += t1.Content[0].Duration
         })
 
         return {
-            Contents: [...t1.Contents, ...t2.Contents],
+            Content: [...t1.Content, ...t2.Content],
             Meta: t1.Meta
         }
     },
 
+    Fermata(subtrack) {
+        const t = new SubtrackParser(subtrack, this.Settings, this.Libraries).parseTrack()
+        t.Content.forEach((note) => {
+            note.Duration *= this.Settings.Ferm
+            note.StartTime *= this.Settings.Ferm
+        })
+        t.Meta.Duration *= this.Settings.Ferm
+        return t
+    },
+
+    ConOct(octave = 0, volumeScale = 1) {
+        AssignSetting(this.Settings, 'ConOct', octave, (octave) => Number.isInteger(octave))
+        AssignSetting(this.Settings, 'ConOctVolume', volumeScale, (volume) => volume >= 0)
+    },
     Vol(volume) {
-        AssignSetting(this.Settings, 'Volume', volume / 100, Criteria.Vol)
+        AssignSetting(this.Settings, 'Volume', volume / 100, (volume) => volume <= 1 && volume >= 0)
     },
     Spd(speed) {
-        AssignSetting(this.Settings, 'Speed', speed, Criteria.Spd)
+        AssignSetting(this.Settings, 'Speed', speed, (speed) => speed > 0)
     },
     Key(key) {
-        AssignSetting(this.Settings, 'Key', key, Criteria.Key)
+        AssignSetting(this.Settings, 'Key', key, (key) => Number.isInteger(key))
     },
     Oct(oct) {
-        AssignSetting(this.Settings, 'Octave', oct, Criteria.Oct)
+        AssignSetting(this.Settings, 'Octave', oct, (octave) => Number.isInteger(octave))
     },
-    KeyOct(key, oct) {
-        AssignSetting(this.Settings, 'Key', Tonality[key], Criteria.Key)
-        AssignSetting(this.Settings, 'Octave', oct, Criteria.Oct)
+    KeyOct(keyOct) {
+        let key, oct, splitIndex
+        if (keyOct.endsWith('\'')) {
+            splitIndex = keyOct.indexOf('\'')
+            key = keyOct.slice(0, splitIndex)
+            oct = keyOct.length - splitIndex + 1
+        } else if (keyOct.endsWith(',')) {
+            splitIndex = keyOct.indexOf('\'')
+            key = keyOct.slice(0, splitIndex)
+            oct = keyOct.length - splitIndex + 1
+        } else {
+            key = keyOct
+            oct = 0
+        }
+        const Tonality = {
+            'C': 0,
+            'G': 7,
+            'D': 2,
+            'A': 9,
+            'E': 4,
+            'B': -1,
+            '#F': 6,
+            '#C': 1,
+            'F': 5,
+            'bB': -2,
+            'bE': 3,
+            'bA': 8,
+            'bD': 1,
+            'bG': 6,
+            'bC': -1,
+
+            'F#': 6,
+            'C#': 1,
+            'Bb': -2,
+            'Eb': 3,
+            'Ab': 8,
+            'Db': 1,
+            'Gb': 6,
+            'Cb': -1,
+        }
+        AssignSetting(this.Settings, 'Key', Tonality[key], (key) => Number.isInteger(key))
+        AssignSetting(this.Settings, 'Octave', oct, (octave) => Number.isInteger(octave))
     },
     Beat(beat) {
-        AssignSetting(this.Settings, 'Beat', beat, Criteria.Beat)
+        AssignSetting(this.Settings, 'Beat', beat, (beat) => beat > 0 && Number.isInteger(Math.log2(beat)))
     },
     Bar(bar) {
-        AssignSetting(this.Settings, 'Bar', bar, Criteria.Bar)
+        AssignSetting(this.Settings, 'Bar', bar, (bar) => bar > 0 && Number.isInteger(bar))
     },
     BarBeat(bar, beat) {
-        AssignSetting(this.Settings, 'Bar', bar, Criteria.Bar)
-        AssignSetting(this.Settings, 'Beat', beat, Criteria.Beat)
+        AssignSetting(this.Settings, 'Bar', bar, (bar) => bar > 0 && Number.isInteger(bar))
+        AssignSetting(this.Settings, 'Beat', beat, (beat) => beat > 0 && Number.isInteger(Math.log2(beat)))
     },
     Dur(scale) {
-        AssignSetting(this.Settings, 'Duration', scale, Criteria.Dur)
+        AssignSetting(this.Settings, 'Duration', scale, (scale) => scale > 0)
     },
     Acct(scale) {
-        AssignSetting(this.Settings, 'Accent', scale, Criteria.Acct)
+        AssignSetting(this.Settings, 'Accent', scale, (scale) => scale > 1)
     },
     Light(scale) {
-        AssignSetting(this.Settings, 'Light', scale, Criteria.Light)
+        AssignSetting(this.Settings, 'Light', scale, (scale) => scale < 1 && scale > 0)
     },
     Appo(r) {
-        AssignSetting(this.Settings, 'Appo', r, Criteria.Appo)
+        AssignSetting(this.Settings, 'Appo', r, (r) => r > 0)
     },
     Port(r) {
-        AssignSetting(this.Settings, 'Port', r, Criteria.Port)
+        AssignSetting(this.Settings, 'Port', r, (r) => r > 0)
     },
     Trace(count) {
-        AssignSetting(this.Settings, 'Trace', count, Criteria.Trace)
+        AssignSetting(this.Settings, 'Trace', count, count > 0 && count <= 4 && Number.isInteger(count))
     },
     FadeIn(time) {
-        AssignSetting(this.Settings, 'FadeIn', time, Criteria.FadeIn)
+        AssignSetting(this.Settings, 'FadeIn', time, (time) => time >= 0)
     },
     FadeOut(time) {
-        AssignSetting(this.Settings, 'FadeOut', time, Criteria.FadeOut)
+        AssignSetting(this.Settings, 'FadeOut', time, (time) => time >= 0)
     },
     Rev(r) {
-        AssignSetting(this.Settings, 'Rev', r, Criteria.Rev)
+        AssignSetting(this.Settings, 'Rev', r, () => true)
+    },
+    Ferm(ferm) {
+        AssignSetting(this.Settings, 'Ferm', ferm, (ferm) => ferm > 1)
     },
     setVar(key, value) {
         this.Settings.Var[key] = value
@@ -209,71 +266,8 @@ module.exports = {
     },
     Stac(restProportion, index = 1) {
         if (typeof restProportion !== 'number') throw new TypeError('Non-numeric value passed in as Stac')
-        if (!Criteria.Stac(restProportion)) throw new RangeError('Stac out of range')
+        if (!((restProportion) => restProportion >= 0 && restProportion <= 1)(restProportion)) throw new RangeError('Stac out of range')
         if (![0, 1, 2].indexOf(index)) throw new RangeError('Stac index out of range')
         this.Settings.Stac[index] = restProportion
-    },
+    }
 }
-
-const Criteria = {
-    Vol: (volume) => volume <= 1 && volume >= 0,
-    Spd: (speed) => speed > 0,
-    Key: (key) => Number.isInteger(key),
-    Oct: (octave) => Number.isInteger(octave),
-    Beat: (beat) => beat > 0 && Number.isInteger(Math.log2(beat)),
-    Bar: (bar) => bar > 0 && Number.isInteger(bar),
-    Dur: (scale) => scale > 0,
-    Stac: (restProportion) => restProportion >= 0 && restProportion <= 1,
-    Acct: (scale) => scale > 1,
-    Light: (scale) => scale < 1 && scale > 0,
-    Appo: (r) => r > 0,
-    Port: (r) => r > 0,
-    Trace: (count) => count > 0 && count <= 4 && Number.isInteger(count),
-    FadeIn: (time) => time > 0,
-    FadeOut: (time) => time > 0,
-    Rev: () => true,
-}
-const Tonality = {
-    'C': 0,
-    'G': 7,
-    'D': 2,
-    'A': 9,
-    'E': 4,
-    'B': -1,
-    '#F': 6,
-    '#C': 1,
-    'F': 5,
-    'bB': -2,
-    'bE': 3,
-    'bA': 8,
-    'bD': 1,
-    'bG': 6,
-    'bC': -1,
-
-    'F#': 6,
-    'C#': 1,
-    'Bb': -2,
-    'Eb': 3,
-    'Ab': 8,
-    'Db': 1,
-    'Gb': 6,
-    'Cb': -1,
-}
-
-/**
- * 
- * @param {SMML.GlobalSetting} globalSetting 
- * @param {string} key 
- * @param {number} value 
- * @param {function} criterion 
- */
-function AssignSetting(globalSetting, key, value, criterion) {
-    if (typeof value !== 'number') throw new TypeError(`Non-numeric value passed in as ${key}`)
-    if (!criterion(value)) throw new RangeError(`${key} out of range`)
-    globalSetting[key] = value
-}
-
-// consider using Proxy
-/* new Proxy({}, {
-    get (target, key) {}
-}) */

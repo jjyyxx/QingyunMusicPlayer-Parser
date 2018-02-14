@@ -1,4 +1,5 @@
-const { readFileSync, existsSync } = require('fs')  // TODO: consider async version
+const { AssignSetting } = require('./Util')
+const { SubtrackParser } = require('./TrackParser')
 
 class LibLoader {
     /**
@@ -9,7 +10,7 @@ class LibLoader {
         this.internalLib = []
         this.externalLib = []
         for (const lib of libs) {
-            if (lib.Type === 'Internal') {
+            if (lib.Storage === 'Internal') {
                 this.internalLib.push(lib)
             } else {
                 this.externalLib.push(lib)
@@ -17,12 +18,13 @@ class LibLoader {
         }
 
         this.result = {
-            ChordNotations: {},
-            ChordOperators: {},
+            ChordNotation: {},
+            ChordOperator: {},
             MetaInformation: {},
-            FunctionPackage: {},
+            FunctionPackage: {
+                Custom: {}
+            },
             MIDIEventList: {},
-            Library: {}
         }
         if (withDefault) {
             Object.assign(this.result, LibLoader.Default)
@@ -44,6 +46,7 @@ class LibLoader {
      * @param {SMML.InternalLibrary} lib 
      */
     loadInternalLibrary(lib) {
+        let code
         switch (lib.Type) {
         case LibLoader.libType.ChordNotation:
             lib.Data.forEach((notation) => {
@@ -58,11 +61,13 @@ class LibLoader {
         case LibLoader.libType.MetaInformation:
             break
         case LibLoader.libType.FunctionPackage:
+            code = 'this.result.FunctionPackage.Custom = {' + lib.Data.map((func) => func.Code).join(',') + '}'
+            eval(code)
             break
         case LibLoader.libType.MIDIEventList:
             break
         case LibLoader.libType.Library:
-            Object.assign(this.result, new LibLoader(lib.Data, false).load())
+        // Object.assign(this.result, new LibLoader(lib.Data, false).load())
         }
     }
 
@@ -71,39 +76,64 @@ class LibLoader {
      * @param {SMML.ExternalLibrary} lib
      */
     loadExternalLibrary(lib) {
-        if (existsSync(lib.Path)) {
-            const content = readFileSync(lib.Path, 'utf8')
-            switch (lib.Type) {
-            case LibLoader.libType.ChordNotation:
-                JSON.parse(content).forEach((notation) => {
-                    this.result.ChordNotation[notation.Notation] = notation.Pitches
-                })
-                break
-            case LibLoader.libType.ChordOperator:
-                JSON.parse(content).forEach((operator) => {
-                    this.result.ChordOperator[operator.Notation] = operator.Pitches
-                })
-                break
-            case LibLoader.libType.MetaInformation:
-                break
-            case LibLoader.libType.FunctionPackage:
-                break
-            case LibLoader.libType.MIDIEventList:
-                break
-            case LibLoader.libType.Library:
-                Object.assign(this.result, new LibLoader(JSON.parse(content), false).load())
-            }
+        switch (lib.Type) {
+        case LibLoader.libType.ChordNotation:
+            // JSON.parse(content).forEach((notation) => {
+            //     this.result.ChordNotation[notation.Notation] = notation.Pitches
+            // })
+            break
+        case LibLoader.libType.ChordOperator:
+            // JSON.parse(content).forEach((operator) => {
+            //     this.result.ChordOperator[operator.Notation] = operator.Pitches
+            // })
+            break
+        case LibLoader.libType.MetaInformation:
+            break
+        case LibLoader.libType.FunctionPackage:
+            break
+        case LibLoader.libType.MIDIEventList:
+            break
+        case LibLoader.libType.Library:
+            this.loadSubPackage(lib.Content)
+        }
+    }
+
+    /**
+     * 
+     * @param {SMML.Library[]} content 
+     */
+    loadSubPackage(content) {
+        const sub = new LibLoader(content, false).load()
+        this.result.ChordNotation = {
+            ...this.result.ChordNotation,
+            ...sub.ChordNotation
+        }
+        this.result.ChordOperator = {
+            ...this.result.ChordOperator,
+            ...sub.ChordOperator
+        }
+        this.result.FunctionPackage.Custom = {
+            ...this.result.FunctionPackage.Custom,
+            ...sub.FunctionPackage.Custom
+        }
+        this.result.MetaInformation = {
+            ...this.result.MetaInformation,
+            ...sub.MetaInformation
+        }
+        this.result.MIDIEventList = {
+            ...this.result.MIDIEventList,
+            ...sub.MIDIEventList
         }
     }
 }
 
 LibLoader.libType = {
-    ChordNotation: 'ChordNotations',
-    ChordOperator: 'ChordOperators',
+    ChordNotation: 'ChordNotation',
+    ChordOperator: 'ChordOperator',
     MetaInformation: 'MetaInformation',
-    FunctionPackage: 'FunctionPackage',
+    FunctionPackage: 'Function',
     MIDIEventList: 'MIDIEventList',
-    Library: 'Library'
+    Library: 'Package'
 }
 
 LibLoader.Default = {
@@ -123,17 +153,28 @@ LibLoader.Default = {
     MetaInformation: {},
     FunctionPackage: {
         STD: require('./STD'),
+        Custom: {},
         applyFunction(parser, token) {
-            return this.STD[token.Name].apply(parser, token.Argument.map((arg) => {
+            return this.locateFunction(token.Name).apply({
+                Settings: parser.Settings,
+                Libraries: parser.Libraries
+            }, token.Argument.map((arg) => {
                 switch (arg.Type) {
+                case 'Read':
+                    return Number(arg.Content)
                 case 'String':
                     return arg.Content
                 case 'Expression':
-                    return eval(arg.Content.replace(/log2/g, 'Math.log2'))    // potentially vulnerable
+                    return eval(arg.Content.replace(/log2/g, 'Math.log2'))
                 default:
                     return arg
                 }
             }))
+        },
+        locateFunction (name) {
+            if (name in this.STD) return this.STD[name]
+            if (name in this.Custom) return this.Custom[name]   // can be changed to employ package mechanism
+            return () => {}
         }
     },
     MIDIEventList: {},

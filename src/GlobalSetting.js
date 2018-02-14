@@ -5,7 +5,7 @@ class GlobalSetting {
         Beat = 4,
         Speed = 90,
         Volume = 1.0,
-        Stac = [1, 1 / 2, 1 / 4],
+        Stac = [0, 1 / 2, 3 / 4],
         Port = 6,
         Appo = 1 / 4,
         Accent = 1,
@@ -13,9 +13,12 @@ class GlobalSetting {
         Trace = 1,
         Duration = 0,
         Oct = 0,
-        FadeIn = 2,
-        FadeOut = 2,
-        Rev = 0
+        FadeIn = 0,
+        FadeOut = 0,
+        Rev = 0,
+        ConOct = 0,
+        ConOctVolume = 1,
+        Ferm = 2
     } = {}) {
         this.Key = Key
         this.Bar = Bar
@@ -33,6 +36,9 @@ class GlobalSetting {
         this.FadeIn = FadeIn
         this.FadeOut = FadeOut
         this.Rev = Rev
+        this.ConOct = ConOct
+        this.ConOctVolume = ConOctVolume
+        this.Ferm = Ferm
         this.Var = {}
     }
 

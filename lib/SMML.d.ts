@@ -19,7 +19,7 @@ declare namespace SMML {
 
     interface ExternalLibrary extends Library{
         Storage: "External"
-        Path: string
+        Content: Library[]
     }
 
     interface Track {
@@ -29,13 +29,13 @@ declare namespace SMML {
             Instrument: string
             Proportion: number
         }>
-        Contents: Array<BaseToken | SubTrack>
+        Content: Array<BaseToken | SubTrack>
     }
 
     interface SubTrack {
         Type: "SubTrack"
         Repeat: number
-        Contents: Array<BaseToken | SubTrack>
+        Content: Array<BaseToken | SubTrack>
     }
 
     interface BaseToken {
@@ -81,6 +81,9 @@ declare namespace SMML {
         FadeIn: number
         FadeOut: number
         Rev: number
+        ConOct: number
+        ConOctVolume: number
+        Ferm: number
         Var: any[]
     }
 
@@ -102,7 +105,8 @@ declare namespace SMML {
             Warnings: Error[],
             PitchQueue: number[][]
         },
-        Contents: ParsedNote[]
+        Instrument: string
+        Content: ParsedNote[]
     }
 
     interface NoteToken {
@@ -120,5 +124,15 @@ declare namespace SMML {
         PitchOperators: string
         ChordNotations: string
         ChordOperators: string
+    }
+
+    interface ParsedSection {
+        ID: string
+        Tracks: ParsedTrack[]
+    }
+
+    interface Adapter {
+        new (parsedSection: ParsedSection)
+        adapt(): any
     }
 }

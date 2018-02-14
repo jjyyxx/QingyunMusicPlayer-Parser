@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>播放测试</title>
+	<script>
+		function play() {
+			var file = document.getElementById("file").files[0];
+			var reader = new FileReader();
+			reader.readAsText(file);
+			reader.onload = function(event) {
+				var result = event.target.result;
+				var obj = JSON.parse(result);
+				var content = obj[0]["Content"];
+				var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+				var gainNode = audioCtx.createGain();
+				for(var i = 0; i < content.length; i++) {
+					if (content[i]["Type"] == "Note") {
+						var oscillator = audioCtx.createOscillator();
+						oscillator.type = 'sine';
+						oscillator.frequency.value = 440 * Math.pow(2, (content[i]["Pitch"] - 9)/12);
+						oscillator.start(content[i]["StartTime"]);
+						oscillator.stop(content[i]["StartTime"] + content[i]["Duration"]);
+						oscillator.connect(gainNode);
+					}
+				}
+				gainNode.connect(audioCtx.destination);
+			}
+		}
+	</script>
+</head>
+<body>
+	打开 JSON 文件：<input type="file" id="file">
+	<br>
+	<button onclick="play()">播放</button>
+</body>
+</html>
