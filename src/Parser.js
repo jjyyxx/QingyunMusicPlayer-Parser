@@ -4,9 +4,13 @@ const { TrackParser } = require('./TrackParser')
 
 class Parser {
     /**
-     * Parser
-     * @param {SMML.TokenizedData} tokenizedData
-     * @param {SMML.Adapter} adapter
+     * SMML Parser
+     * @param {SMML.TokenizedData} tokenizedData 经过tok的JSON对象
+     * @param {SMML.Adapter} adapter 可选的Adapter
+     * @example
+     * new Parser(tokenizedData)
+     * new Parser(tokenizedData, MIDIAdapter)
+     * new Parser(tokenizedData, MMAAdapter)
      */
     constructor(tokenizedData, adapter = undefined) {
         this.tokenizedData = tokenizedData
