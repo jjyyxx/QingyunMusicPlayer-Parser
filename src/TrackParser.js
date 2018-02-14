@@ -41,7 +41,7 @@ class TrackParser {
         this.Instruments = track.Instruments
         this.Libraries = libraries
         this.Content = track.Content
-        this.Settings = sectionSettings
+        this.Settings = sectionSettings.extend()
         this.Context = {
             afterTie: false,
             notesBeforeTie: [],
@@ -62,6 +62,9 @@ class TrackParser {
             return [trackResult]
         } else {
             return this.Instruments.map((instrument) => {
+                if (instrument.Proportion === null) {
+                    instrument.Proportion = 1
+                }
                 return {
                     Instrument: instrument.Instrument,
                     ID: this.ID ? `${this.ID}#${instrument.Instrument}` : instrument.Instrument,
@@ -108,7 +111,7 @@ class TrackParser {
                 result.push(...localContext.subtrackTemp.Content)
                 break
             case 'Subtrack':
-                this.handleSubtrack(new SubtrackParser(token, this.Settings, this.Libraries).parseTrack(), localContext)
+                this.handleSubtrack(new SubtrackParser(token, this.Settings.extend(), this.Libraries).parseTrack(), localContext)
                 result.push(...localContext.subtrackTemp.Content)
                 break
             case 'Note':
@@ -248,7 +251,7 @@ class TrackParser {
             pitches.push(...this.Context.pitchQueue[this.Context.pitchQueue.length - this.Settings.Trace])
         } else {
             for (const pitch of note.Pitches) {
-                if (pitch.Pitch) {
+                if ('Pitch' in pitch) {
                     pitches.push(pitch.Pitch)
                     continue
                 }
@@ -288,7 +291,7 @@ class TrackParser {
             }])
         }
 
-        const volumes = [].fill(volume, 0, pitches.length)
+        const volumes = new Array(pitches.length).fill(volume)
         if (this.Settings.ConOct !== 0) {
             pitches.push(...pitches.map((pitch) => pitch + 12 * this.Settings.ConOct))
             volumes.push(...volumes.map((volume) => volume * this.Settings.ConOctVolume))

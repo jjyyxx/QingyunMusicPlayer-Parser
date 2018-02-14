@@ -132,7 +132,7 @@ var instrDict = {
 }
 
 function audioLib(instr_No) {
-    return ('00' + instr_No.toString()).slice(-3) + '0_SoundBlasterOld_sf2'
+    return ('00' + '0'.toString()).slice(-3) + '0_SoundBlasterOld_sf2'
 }
 
 // function changeInstrument(player, path, name) {
@@ -156,17 +156,17 @@ function play() {
             (instrs) => {
                 var initialTime = audioCtx.currentTime
                 for (var i = 0, length = tracks.length; i < length; i++) {
-                    var contents = tracks[i]['Contents']
-                    for (var j = 0; j < contents.length; j++) {
-                        if (contents[j]['Type'] == 'Note') {
+                    var content = tracks[i]['Content']
+                    for (var j = 0; j < content.length; j++) {
+                        if (content[j]['Type'] == 'Note') {
                             player.queueWaveTable(
                                 audioCtx,
                                 audioCtx.destination,
                                 window.fonts[instrs[i]],
-                                contents[j]['StartTime'] + initialTime,
-                                contents[j]['Pitch'] + 60,
-                                contents[j]['Duration'],
-                                contents[j]['Volume']
+                                content[j]['StartTime'] + initialTime,
+                                content[j]['Pitch'] + 60,
+                                content[j]['Duration'],
+                                content[j]['Volume']
                             )
                         }
                     }

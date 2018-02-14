@@ -118,7 +118,7 @@ class Parser {
         return {
             ID: section.ID,
             Tracks: [].concat(...section.Tracks.map((track) => {
-                const tempTracks = new TrackParser(track, this.sectionContext.Settings.extend(), this.libraries).parseTrack()
+                const tempTracks = new TrackParser(track, this.sectionContext.Settings, this.libraries).parseTrack()
                 for (const tempTrack of tempTracks) {
                     if (tempTrack.Instrument in instrStatistic) {
                         instrStatistic[tempTrack.Instrument] += 1
