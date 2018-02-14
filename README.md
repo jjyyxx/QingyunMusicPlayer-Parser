@@ -1,7 +1,5 @@
 # QingyunMusicPlayer-Parser
 
-WIP
-
 - [x] Basic note
 - [x] Note with chord
 - [x] Tie
@@ -14,5 +12,6 @@ WIP
 - [x] Special scaledegree -1 0 10
 - [x] Arpeggio
 - [x] External lib
+- [x] MIDI and MMA adapter
 
 Enter test phase!
