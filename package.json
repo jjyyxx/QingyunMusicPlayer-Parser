@@ -10,6 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/obstudio/QingyunMusicPlayer-Parser.git"
   },
+  "type": "lib/SMML.d.ts",
   "keywords": [
     "music",
     "parser"
@@ -23,7 +24,5 @@
     "url": "https://github.com/obstudio/QingyunMusicPlayer-Parser/issues"
   },
   "homepage": "https://github.com/obstudio/QingyunMusicPlayer-Parser#readme",
-  "dependencies": {
-    "vm2": "^3.5.2"
-  }
+  "dependencies": {}
 }
