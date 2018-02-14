@@ -378,6 +378,10 @@ class TrackParser {
         while (pointer < length) {
             const char = note.DurationOperators.charAt(pointer)
             switch (char) {
+            case '=':
+                duration /= 4
+                pointer += 1
+                break
             case '-':
                 duration += 1
                 pointer += 1

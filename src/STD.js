@@ -5,7 +5,7 @@ module.exports = {
     Tremolo1(expr, subtrack) {
         const t = new SubtrackParser(subtrack, this.Settings, this.Libraries).parseTrack()
         const pow = Math.pow(2, -expr)
-        const num = t.Meta.Duration / pow
+        const num = Math.round(t.Meta.Duration / pow)
         const result = []
         const length = t.Content.length
         for (let i = 0; i < num; i++) {
@@ -24,7 +24,7 @@ module.exports = {
     Tremolo2(expr, subtrack1, subtrack2) {
         const ts = [new SubtrackParser(subtrack1, this.Settings, this.Libraries).parseTrack(), new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()]
         const pow = Math.pow(2, -expr)
-        const num = ts[1].Meta.Duration / pow
+        const num = Math.round(ts[1].Meta.Duration / pow)
         const lengths = ts.map((t) => t.Content.length)
         const result = []
         for (let i = 0; i < num; i++) {
@@ -34,7 +34,6 @@ module.exports = {
                 result.push({ ...(ts[index].Content[j]), StartTime: startTime, Duration: pow })
             }
         }
-
         return {
             Content: result,
             Meta: {
@@ -229,7 +228,7 @@ module.exports = {
         AssignSetting(this.Settings, 'Beat', beat, (beat) => beat > 0 && Number.isInteger(Math.log2(beat)))
     },
     Dur(scale) {
-        AssignSetting(this.Settings, 'Duration', scale, (scale) => scale > 0)
+        AssignSetting(this.Settings, 'Duration', scale, () => true)
     },
     Acct(scale) {
         AssignSetting(this.Settings, 'Accent', scale, (scale) => scale > 1)

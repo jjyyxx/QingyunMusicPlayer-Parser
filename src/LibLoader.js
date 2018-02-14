@@ -167,7 +167,7 @@ LibLoader.Default = {
                 case 'String':
                     return arg.Content
                 case 'Expression':
-                    return eval(arg.Content.replace(/log2/g, 'Math.log2'))
+                    return eval(arg.Content.replace(/Log2/g, 'Math.log2'))
                 default:
                     return arg
                 }
