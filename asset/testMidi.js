@@ -132,7 +132,7 @@ var instrDict = {
 }
 
 function audioLib(instr_No) {
-    return ('00' + '0'.toString()).slice(-3) + '0_SoundBlasterOld_sf2'
+    return ('00' + instr_No.toString()).slice(-3) + '0_SoundBlasterOld_sf2'
 }
 
 // function changeInstrument(player, path, name) {
