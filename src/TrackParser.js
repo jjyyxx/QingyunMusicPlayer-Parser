@@ -115,16 +115,9 @@ class TrackParser {
                 result.push(...localContext.subtrackTemp.Content)
                 break
             case 'Note':
-                tempNote = this.parseNote(token)
-                if (!(tempNote instanceof Array)) {
-                    this.handleSubtrack(tempNote, localContext)
-                    result.push(...localContext.subtrackTemp.Content)
-                } else {
-                    this.Context.notesBeforeTie = tempNote
-                    this.handleNote(token, localContext)
-                    result.push(...tempNote)
-                }
-
+                this.Context.notesBeforeTie = this.parseNote(token)
+                this.handleNote(token, localContext)
+                result.push(...this.Context.notesBeforeTie)
                 break
             case 'Tie':
                 this.Context.afterTie = true
@@ -215,7 +208,7 @@ class TrackParser {
     }
 
     handleNote(note, localContext) {
-        const noteDuration = this.parseDuration(note)
+        const noteDuration = this.parseBeat(note)
         if (localContext.leftFirst) {
             localContext.leftIncomplete += noteDuration
         } else {
@@ -240,7 +233,8 @@ class TrackParser {
      */
     parseNote(note) {
         const pitches = []
-        const duration = this.parseDuration(note)
+        const beat = this.parseBeat(note)
+        const duration = beat * 60 / this.Settings.Speed
         const actualDuration = duration * (1 - this.Settings.Stac[note.Staccato])
         const volumeScale = note.VolumeOperators.split('').reduce((sum, cur) => sum * cur === '>' ? this.Settings.Accent : cur === ':' ? this.Settings.Light : 1, 1)
         const volume = this.Settings.Volume * volumeScale
@@ -251,44 +245,16 @@ class TrackParser {
             pitches.push(...this.Context.pitchQueue[this.Context.pitchQueue.length - this.Settings.Trace])
         } else {
             for (const pitch of note.Pitches) {
-                if ('Pitch' in pitch) {
-                    pitches.push(pitch.Pitch)
-                    continue
-                }
                 if (pitch.ScaleDegree === '0') continue
                 if (pitch.ScaleDegree === '10') {
                     pitches.push(null)
-                } else if (pitch.ChordNotations === '') {
+                } else if (pitch.Chord === '') {
                     pitches.push(this.parsePitch(pitch) + pitchDelta)
                 } else {
                     const basePitch = this.parsePitch(pitch) + pitchDelta
                     pitches.push(...this.parseChord(pitch).map((subPitch) => subPitch + basePitch))
                 }
             }
-        }
-        if (note.Arpeggio) {
-            const appo = []
-            const length = pitches.length
-            for (let i = 1; i < length; i++) {
-                appo.push(Object.assign({}, note, {
-                    Pitches: pitches.slice(0, i).map((pitch) => ({ Pitch: pitch })),
-                    Arpeggio: false,
-                    PitchOperators: ''
-                }))
-            }
-            return this.Libraries.FunctionPackage.STD.GraceNote.apply(this, [{
-                Type: 'Subtrack',
-                Repeat: -1,
-                Content: appo
-            }, {
-                Type: 'Subtrack',
-                Repeat: -1,
-                Content: [Object.assign({}, note, {
-                    Pitches: pitches.map((pitch) => ({ Pitch: pitch })),
-                    Arpeggio: false,
-                    PitchOperators: ''
-                })]
-            }])
         }
 
         const volumes = new Array(pitches.length).fill(volume)
@@ -305,7 +271,7 @@ class TrackParser {
                 const index = pitches.indexOf(prevNote.Pitch)
                 if (index === -1) return
                 if (prevNote.Volume !== volume[index]) return
-                prevNote.Duration += duration
+                prevNote.Duration += actualDuration
                 pitches.splice(index, 1)
                 volumes.splice(index, 1)
             })
@@ -331,9 +297,9 @@ class TrackParser {
     * @returns {number[]}
     */
     parseChord(pitch) {
-        const pitches = this.Libraries.ChordNotation[pitch.ChordNotations]
+        const pitches = [0] //this.Libraries.Chord[pitch.Chord]
         if (pitch.ChordOperators === '') return pitches
-        const operators = this.Libraries.ChordOperator[pitch.ChordOperators]
+        const operators = this.Libraries.Chord[pitch.Chord]
         const pitchResult = []
         operators.forEach(([head, tail, delta]) => {
             if (head > 0) {
@@ -368,7 +334,7 @@ class TrackParser {
      * @param {SMML.NoteToken} note
      * @returns {number}
      */
-    parseDuration(note) {
+    parseBeat(note) {
         let duration = 1
         let pointer = 0
         let dotCount = 0

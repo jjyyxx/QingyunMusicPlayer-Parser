@@ -20,8 +20,7 @@ class LibLoader {
         }
 
         this.result = {
-            ChordNotation: {},
-            ChordOperator: {},
+            Chord: {},
             MetaInformation: {},
             FunctionPackage: {
                 Custom: {}
@@ -50,14 +49,9 @@ class LibLoader {
     loadInternalLibrary(lib) {
         let code
         switch (lib.Type) {
-        case LibLoader.libType.ChordNotation:
-            lib.Data.forEach((notation) => {
-                this.result.ChordNotation[notation.Notation] = notation.Pitches
-            })
-            break
-        case LibLoader.libType.ChordOperator:
+        case LibLoader.libType.Chord:
             lib.Data.forEach((operator) => {
-                this.result.ChordOperator[operator.Notation] = operator.Pitches
+                this.result.Chord[operator.Notation] = operator.Pitches
             })
             break
         case LibLoader.libType.MetaInformation:
@@ -79,12 +73,7 @@ class LibLoader {
      */
     loadExternalLibrary(lib) {
         switch (lib.Type) {
-        case LibLoader.libType.ChordNotation:
-            // JSON.parse(content).forEach((notation) => {
-            //     this.result.ChordNotation[notation.Notation] = notation.Pitches
-            // })
-            break
-        case LibLoader.libType.ChordOperator:
+        case LibLoader.libType.Chord:
             // JSON.parse(content).forEach((operator) => {
             //     this.result.ChordOperator[operator.Notation] = operator.Pitches
             // })
@@ -106,8 +95,7 @@ class LibLoader {
      */
     loadSubPackage(content) {
         const sub = new LibLoader(content, false).load()
-        Object.assign(this.result.ChordNotation, sub.ChordNotation)
-        Object.assign(this.result.ChordOperator, sub.ChordOperator)
+        Object.assign(this.result.Chord, sub.Chord)
         Object.assign(this.result.FunctionPackage.Custom, sub.FunctionPackage.Custom)
         Object.assign(this.result.MetaInformation, sub.MetaInformation)
         Object.assign(this.result.MIDIEventList, sub.MIDIEventList)
@@ -115,8 +103,7 @@ class LibLoader {
 }
 
 LibLoader.libType = {
-    ChordNotation: 'ChordNotation',
-    ChordOperator: 'ChordOperator',
+    Chord: 'Chord',
     MetaInformation: 'MetaInformation',
     FunctionPackage: 'Function',
     MIDIEventList: 'MIDIEventList',
@@ -124,14 +111,7 @@ LibLoader.libType = {
 }
 
 LibLoader.Default = {
-    ChordNotation: {
-        M: [0, 4, 7],
-        m: [0, 3, 7],
-        a: [0, 4, 8],
-        d: [0, 3, 6],
-        p: [0, 7, 12]
-    },
-    ChordOperator: {
+    Chord: {
         o: [[0, -1, 0], [1, 1, 12]],
         u: [[-1, -1, -12], [0, -1, 0]],
         i: [[1, 1, 12], [2, -1, 0]],

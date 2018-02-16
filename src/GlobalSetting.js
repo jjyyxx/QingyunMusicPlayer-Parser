@@ -3,7 +3,7 @@ class GlobalSetting {
         Key = 0,
         Bar = 4,
         Beat = 4,
-        Speed = 90,
+        Speed = 60,
         Volume = 1.0,
         Stac = [0, 1 / 2, 3 / 4],
         Port = 6,

@@ -158,6 +158,35 @@ module.exports = {
         return t
     },
 
+    Arpeggio(subtrack) {
+        const t = new SubtrackParser(subtrack, this.Settings, this.Libraries).parseTrack()
+        const num = t.Content.length - 1
+        let dur
+        if (num <= 4) {
+            dur = this.Settings.Appo / 4
+        } else {
+            dur = this.Settings.Appo / num
+        }
+        dur = dur * 60 / this.Settings.Speed
+        const result = []
+        t.Content.reduce((sum, cur, index) => {
+            if (index <= num) {
+                sum.push(cur)
+                cur.Duration = dur
+                for (const note of sum) {
+                    result.push(Object.assign({}, note, { StartTime: dur * index }))
+                }
+            } else {
+                t.Content.forEach((note) => {
+                    note.StartTime += dur * index
+                    note.Duration -= dur * index
+                })
+                result.push(...t.Content)
+            }
+        }, [])
+        return Object.assign(t, {Content: result})
+    },
+
     ConOct(octave = 0, volumeScale = 1) {
         AssignSetting(this.Settings, 'ConOct', octave, (octave) => Number.isInteger(octave))
         AssignSetting(this.Settings, 'ConOctVolume', volumeScale, (volume) => volume >= 0)
