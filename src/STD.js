@@ -100,7 +100,7 @@ module.exports = {
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
         const num = subtrack1.Content.length
         let dur
-        const appo = this.Settings.getOrSetDefault('Appo', 1 / 4)
+        const appo = this.Settings.getOrSetDefault('Seg', 1 / 4)
         if (num <= 4) {
             dur = appo / 4
         } else {
@@ -126,7 +126,7 @@ module.exports = {
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
         const num = subtrack2.Content.length
         let dur
-        const appo = this.Settings.getOrSetDefault('Appo', 1 / 4)
+        const appo = this.Settings.getOrSetDefault('Seg', 1 / 4)
         if (num <= 4) {
             dur = appo / 4
         } else {
@@ -163,7 +163,7 @@ module.exports = {
         const t = new SubtrackParser(subtrack, this.Settings, this.Libraries).parseTrack()
         const num = t.Content.length - 1
         let dur
-        const appo = this.Settings.getOrSetDefault('Appo', 1 / 4)
+        const appo = this.Settings.getOrSetDefault('Seg', 1 / 4)
         if (num <= 4) {
             dur = appo / 4
         } else {
@@ -268,8 +268,8 @@ module.exports = {
     Light(scale) {
         this.Settings.assignSetting('Light', scale, (scale) => scale < 1 && scale > 0)
     },
-    Appo(r) {
-        this.Settings.assignSetting('Appo', r, (r) => r > 0)
+    Seg(r) {
+        this.Settings.assignSetting('Seg', r, (r) => r > 0)
     },
     Port(r) {
         this.Settings.assignSetting('Port', r, (r) => r > 0)
