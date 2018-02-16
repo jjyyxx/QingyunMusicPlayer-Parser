@@ -297,23 +297,23 @@ class TrackParser {
     * @returns {number[]}
     */
     parseChord(pitch) {
-        const pitches = [0] //this.Libraries.Chord[pitch.Chord]
-        if (pitch.ChordOperators === '') return pitches
-        const operators = this.Libraries.Chord[pitch.Chord]
-        const pitchResult = []
-        operators.forEach(([head, tail, delta]) => {
-            if (head > 0) {
-                head -= 1
-            }
-            if (tail > 0) {
-                pitchResult.push(...pitches.slice(head, tail).map((pitch) => pitch + delta))
-            } else if (tail === -1) {
-                pitchResult.push(...pitches.slice(head).map((pitch) => pitch + delta))
-            } else {
-                pitchResult.push(...pitches.slice(head, tail + 1).map((pitch) => pitch + delta))
-            }
-        })
-        return pitchResult
+        return pitch.Chord.split('').reduce((pitches, chord) => {
+            const operator = this.Libraries.Chord[chord]
+            const res = []
+            operator.forEach(([head, tail, delta]) => {
+                if (head > 0) {
+                    head -= 1
+                }
+                if (tail > 0) {
+                    res.push(...pitches.slice(head, tail).map((pitch) => pitch + delta))
+                } else if (tail === -1) {
+                    res.push(...pitches.slice(head).map((pitch) => pitch + delta))
+                } else {
+                    res.push(...pitches.slice(head, tail + 1).map((pitch) => pitch + delta))
+                }
+            })
+            return res
+        }, [0])
     }
 
     /**
