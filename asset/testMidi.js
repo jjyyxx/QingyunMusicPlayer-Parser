@@ -228,7 +228,7 @@ function play() {
                                 audioCtx.destination,
                                 window.fonts[instrs[i]],
                                 content[j]['StartTime'] + initialTime,
-                                content[j]['Pitch'] + 60,
+                                ((content[j]['Pitch'] === null) ? (drumDict[tracks[i]['Instrument']]) : (content[j]['Pitch'] + 60)),
                                 content[j]['Duration'],
                                 content[j]['Volume']
                             )
