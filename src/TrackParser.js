@@ -97,7 +97,6 @@ class TrackParser {
      */
     parseTrackContent(content) {
         const result = []
-        let tempNote = undefined
         const localContext = {
             leftIncomplete: 0,
             rightIncomplete: undefined,

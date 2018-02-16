@@ -6,8 +6,6 @@ class GlobalSetting {
         Speed = 60,
         Volume = 1.0,
         Stac = [0, 1 / 2, 3 / 4],
-        Port = 6,
-        Appo = 1 / 4,
         Accent = 1,
         Light = 1,
         Trace = 1,
@@ -18,7 +16,6 @@ class GlobalSetting {
         Rev = 0,
         ConOct = 0,
         ConOctVolume = 1,
-        Ferm = 2
     } = {}) {
         this.Key = Key
         this.Bar = Bar
@@ -26,8 +23,6 @@ class GlobalSetting {
         this.Speed = Speed
         this.Volume = Volume
         this.Stac = Stac
-        this.Port = Port
-        this.Appo = Appo
         this.Accent = Accent
         this.Light = Light
         this.Trace = Trace
@@ -38,8 +33,16 @@ class GlobalSetting {
         this.Rev = Rev
         this.ConOct = ConOct
         this.ConOctVolume = ConOctVolume
-        this.Ferm = Ferm
         this.Var = {}
+    }
+
+    getOrSetDefault(key, defaultValue) {
+        if (key in this) {
+            return this[key]
+        } else {
+            if (defaultValue) this[key] = defaultValue
+            return defaultValue
+        }
     }
 
     extend(settingObj = {}) {
@@ -51,6 +54,20 @@ class GlobalSetting {
     update(settingObj) {
         Object.assign(this, settingObj)
     }
+
+    /**
+     * 
+     * @param {SMML.GlobalSetting} globalSetting 
+     * @param {string} key 
+     * @param {number} value 
+     * @param {function} criterion 
+     */
+    assignSetting(key, value, criterion) {
+        if (typeof value !== 'number') throw new TypeError(`Non-numeric value passed in as ${key}`)
+        if (!criterion(value)) throw new RangeError(`${key} out of range`)
+        this[key] = value
+    }
+
 }
 
 module.exports = GlobalSetting
