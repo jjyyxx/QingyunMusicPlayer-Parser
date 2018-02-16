@@ -1,4 +1,6 @@
 // eslint-env: web
+var audioLibDir = 'https://jjyyxx.github.io/webaudiofontdata/data/'
+var defaultInstr = 'Piano'
 
 var instrDict = {
     'Piano': 0,
@@ -130,16 +132,78 @@ var instrDict = {
     'Applause': 126,
     'Gunshot': 127
 }
-
-function audioLib(instr_No) {
-    return ('00' + instr_No.toString()).slice(-3) + '0_SoundBlasterOld_sf2'
+// Possible issues: 40, 41, 48 may be incorrect 
+var drumDict = {
+	'BassDrum2': 35,
+	'BassDrum': 36,
+	'SideStick': 37,
+	'Snare': 38,
+	'Clap': 39,
+	'ElectricSnare': 40,
+	'LowFloorTom': 41,
+	'HiHatClosed': 42,
+	'LowTom': 43,
+	'HiHatPedal': 44,
+	'MidTom2': 45,
+	'HiHatOpen': 46,
+	'MidTom': 47,
+	'HighFloorTom': 48,
+	'CrashCymbal': 49,
+	'HighTom': 50,
+	'RideCymbal': 51,
+	'ChineseCymbal': 52,
+	'RideBell': 53,
+	'Tambourine': 54,
+	'SplashCymbal': 55,
+	'Cowbell': 56,
+	'CrashCymbal2': 57,
+	'Vibraslap': 58,
+	'RideCymbal2': 59,
+	'HighBongo': 60,
+	'LowBongo': 61,
+	'HighCongaMute': 62,
+	'HighCongaOpen': 63,
+	'LowConga': 64,
+	'HighTimbale': 65,
+	'LowTimbale': 66,
+	'HighAgogo': 67,
+	'LowAgogo': 68,
+	'Cabasa': 69,
+	'Maracas': 70,
+	'WhistleShort': 71,
+	'WhistleLong': 72,
+	'GuiroShort': 73,
+	'GuiroLong': 74,
+	'Claves': 75,
+	'HighWoodblock': 76,
+	'LowWoodblock': 77,
+	'MuteCuica': 78,
+	'OpenCuica': 79,
+	'MuteTriangle': 80,
+	'OpenTriangle': 81
 }
 
-// function changeInstrument(player, path, name) {
-//     player.loader.waitLoad(function () {
-//         instr = window[name]
-//     })
-// }
+function audioLibFile(instr) {
+	if (instr == '') {
+		instr = defaultInstr
+	}
+	if (instrDict[instr]) {
+		return audioLibDir + ('00' + instrDict[instr].toString()).slice(-3) + '0_FluidR3_GM_sf2_file.json'
+	} else {
+		return audioLibDir + '128' + drumDict[instr].toString() + '_0_FluidR3_GM_sf2_file.json'
+	}
+}
+
+function audioLibVar(instr) {
+	if (instr == '') {
+		instr = defaultInstr
+	}
+	if (instrDict[instr]) {
+		return '_tone_' + ('00' + instrDict[instr].toString()).slice(-3) + '0_FluidR3_GM_sf2_file'
+	} else {
+		return '_drum_' + drumDict[instr].toString() + '_0_FluidR3_GM_sf2_file'
+	}
+}
 
 function play() {
     var file = document.getElementById('file').files[0]
@@ -151,8 +215,8 @@ function play() {
         var tracks = JSON.parse(result)
         var audioCtx = new (window.AudioContext || window.webkitAudioContext)()
         var player = new window.WebAudioFontPlayer()
-        const instrNames = tracks.map((track) => audioLib(instrDict[track['Instrument']]))
-        Promise.all(instrNames.map((instr) => player.loader.load(audioCtx, 'https://jjyyxx.github.io/webaudiofontdata/data/' + instr + '.json', '_tone_' + instr))).then(
+        const instrNames = tracks.map((track) => audioLib(track['Instrument']))
+        Promise.all(instrNames.map((instr) => player.loader.load(audioCtx, audioLibFile[instr], audioLibVar[instr]))).then(
             (instrs) => {
                 var initialTime = audioCtx.currentTime
                 for (var i = 0, length = tracks.length; i < length; i++) {
