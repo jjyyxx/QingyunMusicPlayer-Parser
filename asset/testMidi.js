@@ -215,7 +215,7 @@ function play() {
         var tracks = JSON.parse(result)
         var audioCtx = new (window.AudioContext || window.webkitAudioContext)()
         var player = new window.WebAudioFontPlayer()
-        const instrNames = tracks.map((track) => audioLib(track['Instrument']))
+        const instrNames = tracks.map((track) => track['Instrument'])
         Promise.all(instrNames.map((instr) => player.loader.load(audioCtx, audioLibFile[instr], audioLibVar[instr]))).then(
             (instrs) => {
                 var initialTime = audioCtx.currentTime
