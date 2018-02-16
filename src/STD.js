@@ -1,5 +1,4 @@
 const { SubtrackParser } = require('./TrackParser')
-const { AssignSetting } = require('./Util')
 
 module.exports = {
     Tremolo1(expr, subtrack) {
@@ -65,7 +64,7 @@ module.exports = {
         const pitch1 = t1.Content[0].Pitch
         const pitch2 = t2.Content[0].Pitch
         const duration = t1.Meta.Duration
-        const port = this.Settings.Port
+        const port = this.Settings.getOrSetDefault('Port', 6)
         const num = duration * port
         const step = (pitch2 - pitch1) / (num - 1)
         const pitches = []
@@ -101,10 +100,11 @@ module.exports = {
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
         const num = subtrack1.Content.length
         let dur
+        const appo = this.Settings.getOrSetDefault('Seg', 1 / 4)
         if (num <= 4) {
-            dur = this.Settings.Appo / 4
+            dur = appo / 4
         } else {
-            dur = this.Settings.Appo / num
+            dur = appo / num
         }
         t1.Content.forEach((note) => {
             note.Duration = dur
@@ -126,12 +126,12 @@ module.exports = {
         const t2 = new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()
         const num = subtrack2.Content.length
         let dur
+        const appo = this.Settings.getOrSetDefault('Seg', 1 / 4)
         if (num <= 4) {
-            dur = this.Settings.Appo / 4
+            dur = appo / 4
         } else {
-            dur = this.Settings.Appo / num
+            dur = appo / num
         }
-
         const total = dur * num
         t1.Content.forEach((note) => {
             note.Duration -= total
@@ -150,29 +150,61 @@ module.exports = {
 
     Fermata(subtrack) {
         const t = new SubtrackParser(subtrack, this.Settings, this.Libraries).parseTrack()
+        const ferm = this.Settings.getOrSetDefault('Ferm', 2)
         t.Content.forEach((note) => {
-            note.Duration *= this.Settings.Ferm
-            note.StartTime *= this.Settings.Ferm
+            note.Duration *= ferm
+            note.StartTime *= ferm
         })
-        t.Meta.Duration *= this.Settings.Ferm
+        t.Meta.Duration *= ferm
         return t
     },
 
+    Arpeggio(subtrack) {
+        const t = new SubtrackParser(subtrack, this.Settings, this.Libraries).parseTrack()
+        const num = t.Content.length - 1
+        let dur
+        const appo = this.Settings.getOrSetDefault('Seg', 1 / 4)
+        if (num <= 4) {
+            dur = appo / 4
+        } else {
+            dur = appo / num
+        }
+        dur = dur * 60 / this.Settings.Speed
+        const result = []
+        t.Content.reduce((sum, cur, index) => {
+            if (index < num) {
+                sum.push(cur)
+                cur.Duration = dur
+                for (const note of sum) {
+                    result.push(Object.assign({}, note, { StartTime: dur * index }))
+                }
+            } else {
+                t.Content.forEach((note) => {
+                    note.StartTime += dur * index
+                    note.Duration -= dur * index
+                })
+                result.push(...t.Content)
+            }
+            return sum
+        }, [])
+        return Object.assign(t, {Content: result})
+    },
+
     ConOct(octave = 0, volumeScale = 1) {
-        AssignSetting(this.Settings, 'ConOct', octave, (octave) => Number.isInteger(octave))
-        AssignSetting(this.Settings, 'ConOctVolume', volumeScale, (volume) => volume >= 0)
+        this.Settings.assignSetting('ConOct', octave, (octave) => Number.isInteger(octave))
+        this.Settings.assignSetting('ConOctVolume', volumeScale, (volume) => volume >= 0)
     },
     Vol(volume) {
-        AssignSetting(this.Settings, 'Volume', volume / 100, (volume) => volume <= 1 && volume >= 0)
+        this.Settings.assignSetting('Volume', volume / 100, (volume) => volume >= 0)
     },
     Spd(speed) {
-        AssignSetting(this.Settings, 'Speed', speed, (speed) => speed > 0)
+        this.Settings.assignSetting('Speed', speed, (speed) => speed > 0)
     },
     Key(key) {
-        AssignSetting(this.Settings, 'Key', key, (key) => Number.isInteger(key))
+        this.Settings.assignSetting('Key', key, (key) => Number.isInteger(key))
     },
     Oct(oct) {
-        AssignSetting(this.Settings, 'Octave', oct, (octave) => Number.isInteger(octave))
+        this.Settings.assignSetting('Octave', oct, (octave) => Number.isInteger(octave))
     },
     KeyOct(keyOct) {
         let key, oct, splitIndex
@@ -214,48 +246,48 @@ module.exports = {
             'Gb': 6,
             'Cb': -1,
         }
-        AssignSetting(this.Settings, 'Key', Tonality[key], (key) => Number.isInteger(key))
-        AssignSetting(this.Settings, 'Octave', oct, (octave) => Number.isInteger(octave))
+        this.Settings.assignSetting('Key', Tonality[key], (key) => Number.isInteger(key))
+        this.Settings.assignSetting('Octave', oct, (octave) => Number.isInteger(octave))
     },
     Beat(beat) {
-        AssignSetting(this.Settings, 'Beat', beat, (beat) => beat > 0 && Number.isInteger(Math.log2(beat)))
+        this.Settings.assignSetting('Beat', beat, (beat) => beat > 0 && Number.isInteger(Math.log2(beat)))
     },
     Bar(bar) {
-        AssignSetting(this.Settings, 'Bar', bar, (bar) => bar > 0 && Number.isInteger(bar))
+        this.Settings.assignSetting('Bar', bar, (bar) => bar > 0 && Number.isInteger(bar))
     },
     BarBeat(bar, beat) {
-        AssignSetting(this.Settings, 'Bar', bar, (bar) => bar > 0 && Number.isInteger(bar))
-        AssignSetting(this.Settings, 'Beat', beat, (beat) => beat > 0 && Number.isInteger(Math.log2(beat)))
+        this.Settings.assignSetting('Bar', bar, (bar) => bar > 0 && Number.isInteger(bar))
+        this.Settings.assignSetting('Beat', beat, (beat) => beat > 0 && Number.isInteger(Math.log2(beat)))
     },
     Dur(scale) {
-        AssignSetting(this.Settings, 'Duration', scale, () => true)
+        this.Settings.assignSetting('Duration', scale, () => true)
     },
     Acct(scale) {
-        AssignSetting(this.Settings, 'Accent', scale, (scale) => scale > 1)
+        this.Settings.assignSetting('Accent', scale, (scale) => scale > 1)
     },
     Light(scale) {
-        AssignSetting(this.Settings, 'Light', scale, (scale) => scale < 1 && scale > 0)
+        this.Settings.assignSetting('Light', scale, (scale) => scale < 1 && scale > 0)
     },
-    Appo(r) {
-        AssignSetting(this.Settings, 'Appo', r, (r) => r > 0)
+    Seg(r) {
+        this.Settings.assignSetting('Seg', r, (r) => r > 0)
     },
     Port(r) {
-        AssignSetting(this.Settings, 'Port', r, (r) => r > 0)
+        this.Settings.assignSetting('Port', r, (r) => r > 0)
     },
     Trace(count) {
-        AssignSetting(this.Settings, 'Trace', count, count > 0 && count <= 4 && Number.isInteger(count))
+        this.Settings.assignSetting('Trace', count, count > 0 && count <= 4 && Number.isInteger(count))
     },
     FadeIn(time) {
-        AssignSetting(this.Settings, 'FadeIn', time, (time) => time >= 0)
+        this.Settings.assignSetting('FadeIn', time, (time) => time >= 0)
     },
     FadeOut(time) {
-        AssignSetting(this.Settings, 'FadeOut', time, (time) => time >= 0)
+        this.Settings.assignSetting('FadeOut', time, (time) => time >= 0)
     },
     Rev(r) {
-        AssignSetting(this.Settings, 'Rev', r, () => true)
+        this.Settings.assignSetting('Rev', r, () => true)
     },
     Ferm(ferm) {
-        AssignSetting(this.Settings, 'Ferm', ferm, (ferm) => ferm > 1)
+        this.Settings.assignSetting('Ferm', ferm, (ferm) => ferm > 1)
     },
     setVar(key, value) {
         this.Settings.Var[key] = value
