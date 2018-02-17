@@ -280,8 +280,7 @@ class TrackParser {
             this.Context.afterTie = false
             this.Context.notesBeforeTie.forEach((prevNote) => {
                 const index = pitches.indexOf(prevNote.Pitch)
-                if (index === -1) return
-                if (prevNote.Volume !== volume[index]) return
+                if (index === -1 || prevNote.Volume !== volumes[index]) return
                 prevNote.Duration += actualDuration
                 pitches.splice(index, 1)
                 volumes.splice(index, 1)
