@@ -133,7 +133,7 @@ class TrackParser {
             case 'Note':
                 this.Context.notesBeforeTie = this.parseNote(token)
                 this.handleNote(token, localContext)
-                result.push(...this.Context.notesBeforeTie)
+                result.push(...this.Context.notesBeforeTie.filter((note) => result.indexOf(note) === -1))   // potentially inefficient
                 break
             case 'Tie':
                 this.Context.afterTie = true
@@ -287,19 +287,20 @@ class TrackParser {
             this.Context.pitchQueue.push(pitches.slice(0))
         }
 
+        const result = []
         // merge pitches with previous ones if tie exists
         if (this.Context.afterTie) {
             this.Context.afterTie = false
             this.Context.notesBeforeTie.forEach((prevNote) => {
                 const index = pitches.indexOf(prevNote.Pitch)
                 if (index === -1 || prevNote.Volume !== volumes[index]) return
+                result.push(prevNote)
                 prevNote.Duration += actualDuration
                 pitches.splice(index, 1)
                 volumes.splice(index, 1)
             })
         }
 
-        const result = []
         for (var index = 0, length = pitches.length; index < length; index++) {
             result.push({
                 Type: 'Note',
