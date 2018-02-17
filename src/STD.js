@@ -106,11 +106,12 @@ module.exports = {
         } else {
             dur = appo / num
         }
+        const actualDur = dur * Math.pow(2, -this.Settings.Duration) * 60 / this.Settings.Speed
         t1.Content.forEach((note) => {
-            note.Duration = dur
+            note.Duration = actualDur 
             note.StartTime *= dur
         })
-        const total = dur * num
+        const total = actualDur * num
         t2.Content.forEach((note) => {
             note.StartTime += total
             note.Duration -= total
@@ -132,12 +133,13 @@ module.exports = {
         } else {
             dur = appo / num
         }
-        const total = dur * num
+        const actualDur = dur * Math.pow(2, -this.Settings.Duration) * 60 / this.Settings.Speed
+        const total = actualDur * num
         t1.Content.forEach((note) => {
             note.Duration -= total
         })
         t2.Content.forEach((note) => {
-            note.Duration = dur
+            note.Duration = actualDur
             note.StartTime *= dur
             note.StartTime += t1.Content[0].Duration
         })
@@ -169,19 +171,19 @@ module.exports = {
         } else {
             dur = appo / num
         }
-        dur = dur * 60 / this.Settings.Speed
+        const actualDur = dur * Math.pow(2, -this.Settings.Duration) * 60 / this.Settings.Speed
         const result = []
         t.Content.reduce((sum, cur, index) => {
             if (index < num) {
                 sum.push(cur)
-                cur.Duration = dur
+                cur.Duration = actualDur
                 for (const note of sum) {
-                    result.push(Object.assign({}, note, { StartTime: dur * index }))
+                    result.push(Object.assign({}, note, { StartTime: actualDur * index }))
                 }
             } else {
                 t.Content.forEach((note) => {
-                    note.StartTime += dur * index
-                    note.Duration -= dur * index
+                    note.StartTime += actualDur * index
+                    note.Duration -= actualDur * index
                 })
                 result.push(...t.Content)
             }

@@ -93,6 +93,7 @@ class TrackParser {
 
     preprocess() {
         this.mergeMacro()
+        if (this.Content.length === 1) return
         const last = this.Content.pop()
         const last2 = this.Content.pop()
         if (last.Type === 'BarLine' && last2.Type === 'BarLine') {
@@ -411,6 +412,14 @@ class SubtrackParser extends TrackParser {
         this.mergeMacro()
         if (this.Repeat > 0) {
             const temp = []
+            const repeatArray = this.Content.filter((token) => token.Type === 'BarLine' && token.Order[0] !== 0)
+            const defaultOrder = repeatArray.find((token) => token.Order.length === 0)
+            if (defaultOrder !== undefined) {
+                const order = [].concat(...repeatArray.map((token)=> token.Order))
+                for (let i = 1; i < this.Repeat; i++) {
+                    if (order.indexOf(i) === -1) defaultOrder.Order.push(i)
+                }
+            }
             for (let i = 1; i <= this.Repeat; i++) {
                 let skip = false
                 for (const token of this.Content) {
