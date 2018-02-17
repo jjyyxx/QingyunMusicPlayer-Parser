@@ -56,7 +56,7 @@ class TrackParser {
      */
     parseTrack() {
         this.preprocess()
-        const trackResult = this.parseTrackContent(this.Content)
+        const trackResult = this.parseTrackContent()
         TrackParser.processPedal(trackResult)
         if (this.isSubtrack) {
             return [trackResult]
@@ -76,6 +76,19 @@ class TrackParser {
     }
 
     preprocess() {
+        let length = this.Content.length
+        let pointer = 0
+        while (pointer < length) {
+            const token = this.Content[pointer]
+            if (token.Type === 'Macrotrack' || token.Name in this.Libraries.Track) {
+                const macro = this.Libraries.Track[token.Name]
+                this.Content.splice(pointer, 1, ...macro)
+                // pointer += macro.length - 1
+                length += macro.length - 1
+            } else {
+                pointer += 1
+            }
+        }
         const last = this.Content.pop()
         const last2 = this.Content.pop()
         if (last.Type === 'BarLine' && last2.Type === 'BarLine') {
@@ -92,10 +105,9 @@ class TrackParser {
 
     /**
      * parse track content
-     * @param {(SMML.BaseToken | SMML.SubTrack)[]} content
      * @returns {SMML.ParsedTrack}
      */
-    parseTrackContent(content) {
+    parseTrackContent() {
         const result = []
         const localContext = {
             leftIncomplete: 0,
@@ -103,7 +115,7 @@ class TrackParser {
             leftFirst: true,
             subtrackTemp: undefined,
         }
-        for (var token of content) {
+        for (const token of this.Content) {
             switch (token.Type) {
             case 'FUNCTION':
                 this.handleSubtrack(this.Libraries.FunctionPackage.applyFunction(this, token), localContext)
@@ -240,7 +252,7 @@ class TrackParser {
 
         // calculate pitch array and record it for further trace
         const pitchDelta = this.parseDeltaPitch(note.PitchOperators)
-        if (note.Pitches.length === 1 && note.Pitches[0].ScaleDegree === '-1') {
+        if (note.Pitches.length === 1 && note.Pitches[0].ScaleDegree === '%') {
             pitches.push(...this.Context.pitchQueue[this.Context.pitchQueue.length - this.Settings.Trace])
         } else {
             for (const pitch of note.Pitches) {
