@@ -132,7 +132,6 @@ declare namespace SMML {
     }
 
     interface Adapter {
-        new (parsedSection: ParsedSection)
-        adapt(): any
+        adapt(parsedSection: ParsedSection): any
     }
 }
