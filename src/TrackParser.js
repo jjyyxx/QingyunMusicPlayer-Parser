@@ -148,10 +148,6 @@ class TrackParser {
                     StartTime: this.Context.startTime
                 })
                 break
-            case '__se':
-                this.Settings = this.initialSettings.extend()
-                this.Context.pitchQueue = this.initialPitchQueue.slice()
-                break
             case 'Clef':
             case 'Whitespace':
             case 'Undefined':
@@ -397,10 +393,8 @@ TrackParser.pitchOperatorDict = { '#': 1, 'b': -1, '\'': 12, ',': -12 }
 class SubtrackParser extends TrackParser {
     constructor(track, sectionSettings, libraries, pitchQueue) {
         super(track, sectionSettings, libraries, true)
-        this.initialSettings = sectionSettings.extend()
         this.Repeat = track.Repeat
         this.Context.pitchQueue = pitchQueue.slice()
-        this.initialPitchQueue = pitchQueue.slice()
     }
 
     parseTrack() {
@@ -441,13 +435,9 @@ class SubtrackParser extends TrackParser {
             const skip = this.Content.findIndex((tok) => tok.Skip === true)
             let temp
             if (skip === -1) {
-                temp = new Array(-this.Repeat).fill(this.Content.concat({
-                    Type: '__se'
-                }))
+                temp = new Array(-this.Repeat).fill(this.Content)
             } else {
-                temp = new Array(-this.Repeat - 1).fill(this.Content.concat({
-                    Type: '__se'
-                }))
+                temp = new Array(-this.Repeat - 1).fill(this.Content)
                 temp.push(this.Content.slice(0, skip))
             }
             this.Content = [].concat(...temp)
