@@ -21,7 +21,7 @@ module.exports = {
     },
 
     Tremolo2(expr, subtrack1, subtrack2) {
-        const ts = [new SubtrackParser(subtrack1, this.Settings, this.Libraries, this.pitchQueue).parseTrack(), new SubtrackParser(subtrack2, this.Settings, this.Libraries).parseTrack()]
+        const ts = [new SubtrackParser(subtrack1, this.Settings, this.Libraries, this.pitchQueue).parseTrack(), new SubtrackParser(subtrack2, this.Settings, this.Libraries, this.pitchQueue).parseTrack()]
         const pow = Math.pow(2, -expr)
         const num = Math.round(ts[1].Meta.Duration / pow)
         const lengths = ts.map((t) => t.Content.length)
