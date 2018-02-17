@@ -257,7 +257,7 @@ class TrackParser {
         } else {
             for (const pitch of note.Pitches) {
                 if (pitch.ScaleDegree === '0') continue
-                if (pitch.ScaleDegree === '10') {
+                if (pitch.ScaleDegree === 'x') {
                     pitches.push(null)
                 } else if (pitch.Chord === '') {
                     pitches.push(this.parsePitch(pitch) + pitchDelta)
