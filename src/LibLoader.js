@@ -104,7 +104,7 @@ LibLoader.Default = {
                 pitchQueue: parser.Context.pitchQueue
             }, token.Argument.map((arg) => {
                 switch (arg.Type) {
-                case 'Read':
+                case 'Real':
                     return Number(arg.Content)
                 case 'String':
                     return arg.Content
