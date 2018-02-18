@@ -112,18 +112,17 @@ declare namespace SMML {
     interface NoteToken {
         Type: "Note"
         Pitches: Pitch[]
-        PitchOperators: string
-        DurationOperators: string
-        VolumeOperators: string
+        PitOp: string
+        DurOp: string
+        VolOp: string
         Staccato: number
         Arpeggio: boolean
     }
 
     interface Pitch {
-        ScaleDegree: number
-        PitchOperators: string
-        ChordNotations: string
-        ChordOperators: string
+        Degree: number
+        PitOp: string
+        Chord: string
     }
 
     interface ParsedSection {

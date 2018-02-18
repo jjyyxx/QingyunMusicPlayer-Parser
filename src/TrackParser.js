@@ -252,17 +252,17 @@ class TrackParser {
         const beat = this.parseBeat(note)
         const duration = beat * 60 / this.Settings.Speed
         const actualDuration = duration * (1 - this.Settings.Stac[note.Staccato])
-        const volumeScale = note.VolumeOperators.split('').reduce((sum, cur) => sum * cur === '>' ? this.Settings.Accent : cur === ':' ? this.Settings.Light : 1, 1)
+        const volumeScale = note.VolOp.split('').reduce((sum, cur) => sum * cur === '>' ? this.Settings.Accent : cur === ':' ? this.Settings.Light : 1, 1)
         const volume = this.Settings.Volume * volumeScale
 
         // calculate pitch array and record it for further trace
-        const pitchDelta = this.parseDeltaPitch(note.PitchOperators)
-        if (note.Pitches.length === 1 && note.Pitches[0].ScaleDegree === '%') {
+        const pitchDelta = this.parseDeltaPitch(note.PitOp)
+        if (note.Pitches.length === 1 && note.Pitches[0].Degree === '%') {
             pitches.push(...this.Context.pitchQueue[this.Context.pitchQueue.length - this.Settings.Trace])
         } else {
             for (const pitch of note.Pitches) {
-                if (pitch.ScaleDegree === '0') continue
-                if (pitch.ScaleDegree === 'x') {
+                if (pitch.Degree === '0') continue
+                if (pitch.Degree === 'x') {
                     pitches.push(null)
                 } else if (pitch.Chord === '') {
                     pitches.push(this.parsePitch(pitch) + pitchDelta)
@@ -341,7 +341,7 @@ class TrackParser {
      * @returns {number}
      */
     parsePitch(pitch) {
-        return this.Settings.Key + this.Settings.Octave * 12 + TrackParser.pitchDict[pitch.ScaleDegree] + this.parseDeltaPitch(pitch.PitchOperators)
+        return this.Settings.Key + this.Settings.Octave * 12 + TrackParser.pitchDict[pitch.Degree] + this.parseDeltaPitch(pitch.PitOp)
     }
 
     parseDeltaPitch(pitchOperators) {
@@ -357,9 +357,9 @@ class TrackParser {
         let duration = 1
         let pointer = 0
         let dotCount = 0
-        const length = note.DurationOperators.length
+        const length = note.DurOp.length
         while (pointer < length) {
-            const char = note.DurationOperators.charAt(pointer)
+            const char = note.DurOp.charAt(pointer)
             switch (char) {
             case '=':
                 duration /= 4
@@ -376,7 +376,7 @@ class TrackParser {
             case '.':
                 dotCount = 1
                 pointer += 1
-                while (note.DurationOperators.charAt(pointer) === '.') {
+                while (note.DurOp.charAt(pointer) === '.') {
                     dotCount += 1
                     pointer += 1
                 }
