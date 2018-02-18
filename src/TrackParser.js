@@ -156,7 +156,7 @@ class TrackParser {
         }
 
         if (!this.isSubtrack && !((localContext.leftIncomplete === this.Settings.Bar && localContext.rightIncomplete === this.Settings.Bar) || (localContext.leftIncomplete + localContext.rightIncomplete === this.Settings.Bar))) {
-            this.Context.warnings.push(new Error('Not enough'))
+            this.Context.warnings.push(new Error('Not enough as head or tail'))
         }
         const returnObj = {
             Content: result,
@@ -204,21 +204,35 @@ class TrackParser {
         // this.Context.pitchQueue.push(...subtrack.Meta.PitchQueue)
         this.Context.startTime += subtrack.Meta.Duration
         this.Context.notesBeforeTie = subtrack.Meta.NotesBeforeTie
+        this.Context.warnings.push(...subtrack.Meta.Warnings)
         if (localContext.subtrackTemp.Meta.Single) {
             if (localContext.leftFirst) {
                 localContext.leftIncomplete += localContext.subtrackTemp.Meta.Incomplete[0]
+                if (this.isLegalBar(localContext.leftIncomplete)) {
+                    localContext.leftFirst = false
+                    localContext.rightIncomplete = 0
+                }
             } else {
                 localContext.rightIncomplete += localContext.subtrackTemp.Meta.Incomplete[0]
+                if (this.isLegalBar(localContext.rightIncomplete)) {
+                    localContext.rightIncomplete = 0
+                }
             }
         } else {
             if (localContext.leftFirst) {
                 localContext.leftIncomplete += localContext.subtrackTemp.Meta.Incomplete[0]
                 localContext.leftFirst = false
                 localContext.rightIncomplete = localContext.subtrackTemp.Meta.Incomplete[1]
+                if (this.isLegalBar(localContext.rightIncomplete)) {
+                    localContext.rightIncomplete = 0
+                }
             } else {
                 localContext.rightIncomplete += localContext.subtrackTemp.Meta.Incomplete[0]
-                if (!this.isLegalBar(localContext.rightIncomplete)) this.Context.warnings.push(new Error('Not enough'))
+                if (!this.isLegalBar(localContext.rightIncomplete)) this.Context.warnings.push(new Error('Not enough subtrack ret'))
                 localContext.rightIncomplete = localContext.subtrackTemp.Meta.Incomplete[1]
+                if (this.isLegalBar(localContext.rightIncomplete)) {
+                    localContext.rightIncomplete = 0
+                }
             }
         }
     }
@@ -236,7 +250,7 @@ class TrackParser {
         localContext.leftFirst = false
         if (barLine.Terminal !== true) {
             if (!this.isLegalBar(localContext.rightIncomplete)) {
-                this.Context.warnings.push(new Error('Not enough'))
+                this.Context.warnings.push(new Error('Not enough middle bar'))
             }
             localContext.rightIncomplete = 0
         }
@@ -405,6 +419,16 @@ class SubtrackParser extends TrackParser {
 
     preprocess() {
         this.mergeMacro()
+        if (this.Repeat !== -1 && this.Content.length >= 1) {
+            const last = this.Content[this.Content.length - 1]
+            if (last.Type !== 'BarLine') {
+                this.Content.push({
+                    Type: 'BarLine',
+                    Skip: false,
+                    Order: [0]
+                })
+            }
+        }
         if (this.Repeat > 0) {
             const temp = []
             const repeatArray = this.Content.filter((token) => token.Type === 'BarLine' && token.Order[0] !== 0)
