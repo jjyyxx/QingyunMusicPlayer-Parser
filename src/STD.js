@@ -175,8 +175,9 @@ module.exports = {
         const result = []
         t.Content.reduce((sum, cur, index) => {
             if (index < num) {
-                sum.push(cur)
-                cur.Duration = actualDur
+                const temp = Object.assign({}, cur)
+                sum.push(temp)
+                temp.Duration = actualDur
                 for (const note of sum) {
                     result.push(Object.assign({}, note, { StartTime: actualDur * index }))
                 }
@@ -191,7 +192,7 @@ module.exports = {
         }, [])
         return Object.assign(t, {Content: result})
     },
-
+    
     ConOct(octave = 0, volumeScale = 1) {
         this.Settings.assignSetting('ConOct', octave, (octave) => Number.isInteger(octave))
         this.Settings.assignSetting('ConOctVolume', volumeScale, (volume) => volume >= 0)
@@ -290,12 +291,6 @@ module.exports = {
     },
     Ferm(ferm) {
         this.Settings.assignSetting('Ferm', ferm, (ferm) => ferm > 1)
-    },
-    setVar(key, value) {
-        this.Settings.Var[key] = value
-    },
-    getVar(key, defaultValue = null) {
-        return this.Settings.Var[key] ? this.Var[key] : defaultValue
     },
     Stac(restProportion, index = 1) {
         if (typeof restProportion !== 'number') throw new TypeError('Non-numeric value passed in as Stac')
