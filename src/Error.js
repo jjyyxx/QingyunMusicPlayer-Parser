@@ -9,14 +9,14 @@ class SMMLError extends Error {
         return {
             ErrID: this.name,
             Args: this.args,
-            Message: this.message
+            // Message: this.message
         }
     }
 }
 
 class BarLengthError extends SMMLError{
-    constructor(id, index, ...length) {
-        super('BarLengthError', '', [id, index, ...length])
+    constructor(id, index, length) {
+        super('BarLengthError', '', id, index, length)
     }
 }
 

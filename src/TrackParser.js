@@ -139,7 +139,11 @@ class TrackParser {
                 // this.Context.pitchQueue.push(...subtrack.Meta.PitchQueue)
                 this.Context.startTime += subtrack.Meta.Duration
                 this.Context.notesBeforeTie = subtrack.Meta.NotesBeforeTie
-                this.Context.warnings.push(...subtrack.Meta.Warnings)
+                this.Context.warnings.push(...subtrack.Meta.Warnings.map((warning) => {
+                    warning.args[0] = this.ID
+                    warning.args[1].unshift(this.Content.indexOf(token))
+                    return warning
+                }))
                 if (subtrack.Meta.Single) {
                     if (leftFirst) {
                         leftIncomplete += subtrack.Meta.Incomplete[0]
@@ -164,7 +168,7 @@ class TrackParser {
                     } else {
                         rightIncomplete += subtrack.Meta.Incomplete[0]
                         if (!this.isLegalBar(rightIncomplete)) {
-                            this.Context.warnings.push(this.Content.indexOf(token), new BarLengthError(rightIncomplete))
+                            this.Context.warnings.push(new BarLengthError(this.ID, [this.Content.indexOf(token)], rightIncomplete))
                         }
                         rightIncomplete = subtrack.Meta.Incomplete[1]
                         if (this.isLegalBar(rightIncomplete)) {
@@ -190,7 +194,7 @@ class TrackParser {
                 leftFirst = false
                 if (token.Terminal !== true) {
                     if (!this.isLegalBar(rightIncomplete)) {
-                        this.Context.warnings.push(new BarLengthError(this.ID, this.Content.indexOf(token), rightIncomplete))
+                        this.Context.warnings.push(new BarLengthError(this.ID, [this.Content.indexOf(token)], rightIncomplete))
                     }
                     rightIncomplete = 0
                 }
@@ -208,8 +212,13 @@ class TrackParser {
                 break
             }
         }
-        if (!this.isSubtrack && !((leftIncomplete === this.Settings.Bar && rightIncomplete === this.Settings.Bar) || (leftIncomplete + rightIncomplete === this.Settings.Bar))) {
-            this.Context.warnings.push(new BarLengthError(1, leftIncomplete, rightIncomplete))
+        if (!this.isSubtrack && (leftIncomplete + rightIncomplete !== this.Settings.Bar)) {
+            if (leftIncomplete !== this.Settings.Bar) {
+                this.Context.warnings.push(new BarLengthError(this.ID, [0], leftIncomplete))
+            }
+            if (rightIncomplete !== this.Settings.Bar) {
+                this.Context.warnings.push(new BarLengthError(this.ID, [-1], rightIncomplete))
+            }
         }
         const returnObj = {
             Content: result,
