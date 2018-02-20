@@ -3,7 +3,7 @@ const { SubtrackParser } = require('./TrackParser')
 module.exports = {
     Tremolo1(expr, subtrack) {
         const t = new SubtrackParser(subtrack, this.Settings, this.Libraries, this.pitchQueue).parseTrack()
-        const pow = Math.pow(2, -(expr + this.Settings.Duration)) * 60 / this.Settings.Speed
+        const pow = Math.pow(2, -(expr)) * 60 / this.Settings.Speed
         const num = Math.round(t.Meta.Duration / pow)
         const result = []
         const length = t.Content.length
