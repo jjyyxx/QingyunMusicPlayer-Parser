@@ -64,14 +64,22 @@ class TrackParser {
             return [trackResult]
         } else {
             return this.Instruments.map((instrument) => {
+                const meta = Object.assign({}, trackResult.Meta, { Warnings: trackResult.Meta.Warnings.slice() })
                 if (instrument.Proportion === null) {
                     instrument.Proportion = 1
                 }
                 return {
                     Instrument: instrument.Instrument,
                     ID: this.ID ? `${this.ID}#${instrument.Instrument}` : instrument.Instrument,
-                    Meta: trackResult.Meta,
-                    Content: trackResult.Content.map((note) => Object.assign({}, note, { Volume: note.Volume * instrument.Proportion }))
+                    Meta: meta,
+                    Content: trackResult.Content.map((note) => {
+                        let vol = note.Volume * instrument.Proportion
+                        if (vol > 1) {
+                            meta.Warnings.push(new VolumeError(this.ID, [], vol))
+                            vol = 1
+                        }
+                        Object.assign({}, note, { Volume: vol})
+                    })
                 }
             })
         }
@@ -296,9 +304,6 @@ class TrackParser {
         if (new Set(pitches).size !== pitches.length) {
             this.Context.warnings.push(new DupChordError(this.ID, [this.Content.indexOf(note)], pitches))
         }
-        if (volumes.some((volume) => volume > 1 || volume < 0)) {
-            this.Context.warnings.push(new VolumeError(this.ID, [this.Content.indexOf(note)], volumes))
-        }
         if (pitchQueue.length > 0) {
             this.Context.pitchQueue.push(pitchQueue.slice(0))
         }
@@ -311,7 +316,8 @@ class TrackParser {
                 const index = pitches.indexOf(prevNote.Pitch)
                 if (index === -1 || prevNote.Volume !== volumes[index]) return
                 result.push(prevNote)
-                prevNote.Duration += actualDuration
+                prevNote.__oriDur += actualDuration
+                prevNote.Duration = prevNote.__oriDur
                 pitches.splice(index, 1)
                 volumes.splice(index, 1)
             })
@@ -323,6 +329,7 @@ class TrackParser {
                 Pitch: pitches[index],
                 Volume: volumes[index],
                 Duration: actualDuration,
+                __oriDur: duration,
                 StartTime: this.Context.startTime
             })
         }
