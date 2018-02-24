@@ -331,7 +331,7 @@ class TrackParser {
     }
 
     getVolume(note) {
-        const scale = note.VolOp.split('').reduce((sum, cur) => sum * cur === '>' ? this.Settings.Accent : cur === ':' ? this.Settings.Light : 1, 1)
+        const scale = note.VolOp.split('').reduce((sum, cur) => sum * (cur === '>' ? this.Settings.Accent : (cur === ':' ? this.Settings.Light : 1)), 1)
         const total = this.Settings.Key.length
         const vol = this.Settings.Volume.length
         return [...this.Settings.Volume, ...new Array(total - vol).fill(this.Settings.Volume[vol - 1])].map((v) => v * scale)

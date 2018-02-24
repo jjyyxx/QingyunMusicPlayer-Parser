@@ -142,7 +142,7 @@ module.exports = {
             note.StartTime *= dur
             note.StartTime += t1.Content[0].Duration
         })
-
+        t1.Meta.NotesBeforeTie = t2.Meta.NotesBeforeTie
         return {
             Content: [...t1.Content, ...t2.Content],
             Meta: t1.Meta
