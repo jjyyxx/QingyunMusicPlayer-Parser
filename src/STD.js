@@ -54,6 +54,7 @@ module.exports = {
             note.StartTime *= scale
         })
         t.Meta.Duration *= scale
+        t.Meta.Incomplete[0] *= scale
         return t
     },
 
